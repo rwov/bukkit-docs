@@ -1,25 +1,33 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "Minecraft",
+  "name": "CraftDocs — Bukkit & Spigot",
+  "description": "The complete practical guide and API reference for Bukkit and Spigot Minecraft server plugin development.",
   "theme": "palm",
+  "colors": {
+    "primary": "#22c55e",
+    "light": "#16a34a",
+    "dark": "#4ade80"
+  },
   "logo": {
     "light": "https://media.brand.dev/44722d85-5609-4ecc-bbad-0a8107086cd8.svg",
     "dark": "https://media.brand.dev/44722d85-5609-4ecc-bbad-0a8107086cd8.svg"
   },
   "favicon": "https://media.brand.dev/d92ea122-e670-417e-8b35-a99b3098b485.jpg",
-  "colors": {
-    "primary": "#77746e",
-    "light": "#161616",
-    "dark": "#d2c2c2"
-  },
-  "font": {
-    "headings": { "family": "Noto Sans" },
-    "body": { "family": "Noto Sans" }
-  },
   "navbar": {
+    "links": [
+      {
+        "label": "Official Javadocs",
+        "href": "https://hub.spigotmc.org/javadocs/bukkit/"
+      }
+    ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/rwov/bukkit-api-fork"
+      "href": "https://github.com/rwov/bukkit-docs"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/rwov/bukkit-docs"
     }
   },
   "navigation": {
@@ -28,38 +36,121 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Overview",
             "pages": [
-              "introduction",
-              "quickstart",
-              "plugin-yml"
+              "index"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Getting started",
             "pages": [
-              "concepts/plugin-lifecycle",
-              "concepts/events",
-              "concepts/commands",
-              "concepts/permissions"
+              "getting-started/introduction",
+              "getting-started/learning-path",
+              "getting-started/requirements",
+              "getting-started/maven",
+              "getting-started/gradle",
+              "getting-started/test-server",
+              "getting-started/project-structure",
+              "getting-started/first-plugin",
+              "getting-started/plugin-yml",
+              "getting-started/debugging"
             ]
           },
           {
-            "group": "Working With the World",
+            "group": "Core concepts",
             "pages": [
-              "guides/players",
-              "guides/worlds-blocks",
-              "guides/entities",
-              "guides/inventory-items"
+              "core/plugin-lifecycle",
+              "core/events",
+              "core/commands",
+              "core/permissions",
+              "core/configuration",
+              "core/scheduler",
+              "core/services",
+              "core/dependencies",
+              "core/logging"
             ]
           },
           {
-            "group": "Advanced",
+            "group": "Gameplay",
             "pages": [
-              "guides/scheduler",
-              "guides/configuration",
-              "guides/plugin-messaging",
-              "guides/services"
+              "gameplay/players",
+              "gameplay/messages",
+              "gameplay/sounds-particles",
+              "gameplay/resource-packs",
+              "gameplay/profiles",
+              "gameplay/scoreboards",
+              "gameplay/boss-bars",
+              "gameplay/worlds",
+              "gameplay/blocks",
+              "gameplay/block-data",
+              "gameplay/chunks",
+              "gameplay/entities",
+              "gameplay/attributes-damage",
+              "gameplay/potions",
+              "gameplay/inventories-items",
+              "gameplay/item-meta",
+              "gameplay/gui-menus",
+              "gameplay/recipes",
+              "gameplay/loot",
+              "gameplay/advancements",
+              "gameplay/world-generation",
+              "gameplay/ray-tracing"
+            ]
+          },
+          {
+            "group": "Data and integrations",
+            "pages": [
+              "data/persistent-data",
+              "data/serialization",
+              "data/databases",
+              "data/plugin-messaging",
+              "data/proxies",
+              "data/external-apis"
+            ]
+          },
+          {
+            "group": "Advanced and production",
+            "pages": [
+              "advanced/architecture",
+              "advanced/async",
+              "advanced/performance",
+              "advanced/memory",
+              "advanced/security",
+              "advanced/nms",
+              "advanced/compatibility",
+              "advanced/testing",
+              "advanced/distribution",
+              "advanced/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Tutorials",
+        "groups": [
+          {
+            "group": "Build-along tutorials",
+            "pages": [
+              "tutorials/first-command",
+              "tutorials/join-flow",
+              "tutorials/custom-item",
+              "tutorials/gui-menu",
+              "tutorials/paginated-menu",
+              "tutorials/cooldowns",
+              "tutorials/kit-system",
+              "tutorials/homes",
+              "tutorials/tpa",
+              "tutorials/sidebar",
+              "tutorials/custom-mob",
+              "tutorials/arena",
+              "tutorials/region-protection",
+              "tutorials/custom-recipe",
+              "tutorials/bossbar-timer",
+              "tutorials/announcements",
+              "tutorials/database",
+              "tutorials/config-reload",
+              "tutorials/cross-server",
+              "tutorials/plugin-api"
             ]
           }
         ]
@@ -68,27 +159,126 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Plugin System",
+            "group": "Start here",
             "pages": [
-              "api/java-plugin",
-              "api/plugin-description",
-              "api/plugin-manager"
+              "api-reference/overview",
+              "api-reference/type-system"
             ]
           },
           {
-            "group": "Server & World",
+            "group": "Core and supporting APIs",
             "pages": [
-              "api/server",
-              "api/world",
-              "api/chunk"
+              "api-reference/packages/bukkit",
+              "api-reference/packages/bukkit-advancement",
+              "api-reference/packages/bukkit-ban",
+              "api-reference/packages/bukkit-boss",
+              "api-reference/packages/bukkit-conversations",
+              "api-reference/packages/bukkit-enchantments",
+              "api-reference/packages/bukkit-map",
+              "api-reference/packages/bukkit-material",
+              "api-reference/packages/bukkit-material-types",
+              "api-reference/packages/bukkit-packs",
+              "api-reference/packages/bukkit-registry",
+              "api-reference/packages/bukkit-tag",
+              "api-reference/packages/bukkit-util",
+              "api-reference/packages/bukkit-util-permissions"
             ]
           },
           {
-            "group": "Events & Commands",
+            "group": "Entities and players",
             "pages": [
-              "api/events",
-              "api/commands",
-              "api/scheduler"
+              "api-reference/packages/bukkit-attribute",
+              "api-reference/packages/bukkit-damage",
+              "api-reference/packages/bukkit-entity",
+              "api-reference/packages/bukkit-entity-boat",
+              "api-reference/packages/bukkit-entity-memory",
+              "api-reference/packages/bukkit-entity-minecart",
+              "api-reference/packages/bukkit-entity-model",
+              "api-reference/packages/bukkit-potion",
+              "api-reference/packages/bukkit-profile",
+              "api-reference/packages/bukkit-projectiles"
+            ]
+          },
+          {
+            "group": "Worlds and generation",
+            "pages": [
+              "api-reference/packages/bukkit-block",
+              "api-reference/packages/bukkit-block-banner",
+              "api-reference/packages/bukkit-block-data",
+              "api-reference/packages/bukkit-block-data-type",
+              "api-reference/packages/bukkit-block-sign",
+              "api-reference/packages/bukkit-block-spawner",
+              "api-reference/packages/bukkit-block-structure",
+              "api-reference/packages/bukkit-generator",
+              "api-reference/packages/bukkit-generator-structure",
+              "api-reference/packages/bukkit-spawner",
+              "api-reference/packages/bukkit-structure",
+              "api-reference/packages/bukkit-util-noise"
+            ]
+          },
+          {
+            "group": "Server and plugin systems",
+            "pages": [
+              "api-reference/packages/bukkit-command",
+              "api-reference/packages/bukkit-command-defaults",
+              "api-reference/packages/bukkit-help",
+              "api-reference/packages/bukkit-permissions",
+              "api-reference/packages/bukkit-plugin",
+              "api-reference/packages/bukkit-plugin-java",
+              "api-reference/packages/bukkit-plugin-messaging",
+              "api-reference/packages/bukkit-scheduler",
+              "api-reference/packages/bukkit-scoreboard"
+            ]
+          },
+          {
+            "group": "Data and configuration",
+            "pages": [
+              "api-reference/packages/bukkit-configuration",
+              "api-reference/packages/bukkit-configuration-file",
+              "api-reference/packages/bukkit-configuration-serialization",
+              "api-reference/packages/bukkit-metadata",
+              "api-reference/packages/bukkit-persistence",
+              "api-reference/packages/bukkit-util-io"
+            ]
+          },
+          {
+            "group": "Events",
+            "pages": [
+              "api-reference/packages/bukkit-event",
+              "api-reference/packages/bukkit-event-block",
+              "api-reference/packages/bukkit-event-enchantment",
+              "api-reference/packages/bukkit-event-entity",
+              "api-reference/packages/bukkit-event-hanging",
+              "api-reference/packages/bukkit-event-inventory",
+              "api-reference/packages/bukkit-event-player",
+              "api-reference/packages/bukkit-event-raid",
+              "api-reference/packages/bukkit-event-server",
+              "api-reference/packages/bukkit-event-vehicle",
+              "api-reference/packages/bukkit-event-weather",
+              "api-reference/packages/bukkit-event-world"
+            ]
+          },
+          {
+            "group": "Items and inventories",
+            "pages": [
+              "api-reference/packages/bukkit-inventory",
+              "api-reference/packages/bukkit-inventory-meta",
+              "api-reference/packages/bukkit-inventory-meta-components",
+              "api-reference/packages/bukkit-inventory-meta-components-consumable",
+              "api-reference/packages/bukkit-inventory-meta-components-consumable-effects",
+              "api-reference/packages/bukkit-inventory-meta-tags",
+              "api-reference/packages/bukkit-inventory-meta-trim",
+              "api-reference/packages/bukkit-inventory-recipe",
+              "api-reference/packages/bukkit-inventory-view",
+              "api-reference/packages/bukkit-inventory-view-builder",
+              "api-reference/packages/bukkit-loot"
+            ]
+          },
+          {
+            "group": "Spigot extensions",
+            "pages": [
+              "api-reference/packages/spigotmc",
+              "api-reference/packages/spigotmc-event-player"
             ]
           }
         ]

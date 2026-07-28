@@ -1,68 +1,23 @@
 ---
-title: "Bukkit API: Plugin Development for Minecraft Servers"
-sidebarTitle: "Home"
-description: "The Bukkit API lets you build powerful Minecraft server plugins in Java. Listen to game events, run commands, manage players, and shape the world."
+title: "Bukkit & Spigot Developer Docs"
+description: "The complete manual and API reference for Minecraft server plugins."
+icon: "cubes"
 ---
 
-The Bukkit API is the standard Java interface for building Minecraft server plugins. Whether you want to add custom commands, respond to game events, manipulate the world, or create entirely new mechanics, Bukkit gives you the tools to do it cleanly and reliably on top of any SpigotMC-compatible server.
+# Build anything on a Minecraft server
 
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Build and load your first Bukkit plugin in under 10 minutes.
-  </Card>
-  <Card title="plugin.yml Reference" icon="file-code" href="/plugin-yml">
-    Every field your plugin descriptor supports, with examples.
-  </Card>
-  <Card title="Events Guide" icon="bolt" href="/concepts/events">
-    Listen to any in-game action and react with custom logic.
-  </Card>
-  <Card title="API Reference" icon="book" href="/api/java-plugin">
-    Complete reference for JavaPlugin, Server, World, and more.
-  </Card>
-</CardGroup>
-
-## What You Can Build
-
-Bukkit exposes every major aspect of the Minecraft server so your plugin can interact with it at runtime.
+A complete practical manual for Bukkit and Spigot—from your first `JavaPlugin` to custom menus, persistent multiplayer systems, minigames, databases, proxy networks, world generation, testing, and production performance.
 
 <CardGroup cols={3}>
-  <Card title="Custom Commands" icon="terminal" href="/concepts/commands">
-    Register slash-commands players run in chat.
-  </Card>
-  <Card title="Game Events" icon="bell" href="/concepts/events">
-    React to block breaks, player logins, entity spawns, and hundreds more.
-  </Card>
-  <Card title="World Manipulation" icon="earth-americas" href="/guides/worlds-blocks">
-    Read and write blocks, query chunks, and create custom terrain generators.
-  </Card>
-  <Card title="Player Management" icon="users" href="/guides/players">
-    Send messages, control inventory, teleport players, and track stats.
-  </Card>
-  <Card title="Scheduling" icon="clock" href="/guides/scheduler">
-    Run code after a delay or on a repeating timer — synchronously or async.
-  </Card>
-  <Card title="Configuration" icon="sliders" href="/guides/configuration">
-    Persist plugin settings with hot-reloadable YAML config files.
-  </Card>
+  <Card title="Learn from zero" icon="rocket" href="/getting-started/introduction">Follow the complete learning path and build a clean first plugin.</Card>
+  <Card title="Build real systems" icon="hammer" href="/tutorials/gui-menu">Use end-to-end tutorials for menus, kits, homes, arenas, storage, and more.</Card>
+  <Card title="Explore every API" icon="brackets-curly" href="/api-reference/overview">Browse every public Bukkit and Spigot package with direct official references.</Card>
 </CardGroup>
 
-## How It Works
+## Target
 
-<Steps>
-  <Step title="Add Bukkit as a dependency">
-    Include the Bukkit artifact in your `pom.xml` or `build.gradle` to get access to the full API.
-  </Step>
-  <Step title="Create a JavaPlugin subclass">
-    Extend `JavaPlugin` and override `onEnable()` to run your setup code when the server loads your plugin.
-  </Step>
-  <Step title="Describe your plugin in plugin.yml">
-    Add a `plugin.yml` to your JAR's root with your plugin name, version, main class, commands, and permissions.
-  </Step>
-  <Step title="Drop the JAR into the server's plugins folder">
-    The server discovers and loads your plugin automatically on next start or reload.
-  </Step>
-</Steps>
+This manual targets **Spigot-API 26.2-R0.1-SNAPSHOT**. Snapshot coordinates may move with Minecraft releases, so pin the artifact used by your server and verify exact signatures in the linked Javadocs.
 
-<Note>
-  Bukkit targets **Java 17** and is distributed via the SpigotMC Maven repository. See the [Quickstart](/quickstart) for dependency setup.
-</Note>
+<Warning>
+CraftBukkit classes, NMS classes, server implementations, and undocumented internals are not stable plugin API.
+</Warning>
