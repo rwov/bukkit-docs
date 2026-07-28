@@ -98,6 +98,21 @@
             ]
           },
           {
+            "group": "Modern Minecraft APIs",
+            "pages": [
+              "modern/overview",
+              "modern/custom-screens",
+              "modern/dialogs",
+              "modern/menu-view-builders",
+              "modern/display-entities",
+              "modern/item-components",
+              "modern/resource-packs-models",
+              "modern/data-packs-registries",
+              "modern/server-links-client-features",
+              "modern/compatibility-boundaries"
+            ]
+          },
+          {
             "group": "Data and integrations",
             "pages": [
               "data/persistent-data",
@@ -147,6 +162,14 @@
       {
         "tab": "Tutorials",
         "groups": [
+          {
+            "group": "Modern feature tutorials",
+            "pages": [
+              "tutorials/modern-dialog-confirmation",
+              "tutorials/display-hologram",
+              "tutorials/custom-consumable"
+            ]
+          },
           {
             "group": "Build-along tutorials",
             "pages": [

@@ -1,0 +1,52 @@
+---
+title: "Compatibility and Client Boundaries"
+description: "Ship modern APIs safely across versions and decide when Bukkit, a protocol library, NMS, a resource pack, or a client mod is appropriate."
+---
+
+Modern APIs move quickly. A design that is correct for the current Spigot release may not compile against an older API, and experimental signatures can change.
+
+## Capability matrix
+
+| Technique | New visual layout | New client behavior | Server-version risk | Client install |
+| --- | --- | --- | --- | --- |
+| Bukkit inventory/dialog APIs | Vanilla layouts only | Vanilla behavior only | Low to medium | No |
+| Resource pack | Assets and themed vanilla UI | No new protocol behavior | Medium asset-format risk | Download prompt |
+| Protocol library | Packets the client already understands | Limited to vanilla protocol | Medium to high | No |
+| NMS | Internal server features | Limited to server/client protocol | Very high | No |
+| Client mod | Yes | Yes | Loader/mod compatibility | Yes |
+
+A protocol library can make packet work less brittle, but it cannot force an unmodified client to render a widget the protocol does not define.
+
+## Isolate modern features
+
+Put version-sensitive code in small adapters:
+
+```java
+public interface ConfirmationUi {
+    void open(Player player, ConfirmationRequest request);
+    void close(Player player);
+}
+```
+
+Provide `DialogConfirmationUi` for the current API and `InventoryConfirmationUi` as a fallback. Keep domain logic, permissions, economy changes, and storage outside both implementations.
+
+## Avoid string version branching
+
+Do not spread checks such as `version.startsWith("1.21")` through event handlers. Prefer compiling separate modules, checking for a class/method once during startup, or using the server's supported registry and feature APIs. If reflection is necessary, resolve handles once, fail with a targeted message, and cover every supported build in CI.
+
+## Experimental APIs
+
+When an API is marked `@Experimental`:
+
+- pin the exact compile API
+- do not expose its types in your public plugin API
+- wrap construction and calls
+- test the earliest and latest server build you claim
+- keep a fallback or fail only that feature
+- read deprecations on every update
+
+Never silently catch every linkage error and continue with half-initialized state. Disable the affected module and log the exact missing capability.
+
+## Main-thread rule
+
+Modern does not mean thread-safe. Entity, inventory, player, world, and most Bukkit state should be accessed on the server thread. Perform database or HTTP work asynchronously, then schedule only the final validated mutation back on the main thread.

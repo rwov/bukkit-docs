@@ -1,0 +1,70 @@
+---
+title: "Dialogs and Custom Clicks"
+description: "Open modern vanilla dialogs, choose runtime or data-driven definitions, and securely process custom actions."
+---
+
+Modern Minecraft dialogs are the closest vanilla clients have to a form-style plugin screen. In the current Spigot API the entry points on `Player` are experimental.
+
+## Opening a registered dialog
+
+A dialog installed in the server's data-driven registries can be opened by key:
+
+```java
+NamespacedKey key = new NamespacedKey("myplugin", "confirm_reset");
+player.showDialog(key);
+```
+
+If the key does not exist, `showDialog(NamespacedKey)` throws `IllegalArgumentException`. Validate deployment of the matching data pack and keep a fallback message or inventory confirmation.
+
+Close the active dialog with:
+
+```java
+player.clearDialog();
+```
+
+## Runtime dialogs
+
+Spigot also accepts `net.md_5.bungee.api.dialog.Dialog`. This is useful when the content depends on the player or current server state. The dialog object model belongs to the Bungee components shipped with Spigot, not the `org.bukkit` package, so pin your compile dependency and use the Javadocs matching your server artifact.
+
+Prefer registered keyed dialogs when content is static and versioned with a data pack. Prefer a runtime dialog when per-player text or actions must be assembled immediately.
+
+## Handling actions
+
+Custom dialog actions arrive through `PlayerCustomClickEvent`. The event exposes a `NamespacedKey` identifier and JSON data supplied by the action.
+
+```java
+@EventHandler
+public void onDialogClick(PlayerCustomClickEvent event) {
+    if (!event.getId().equals(new NamespacedKey(plugin, "confirm_reset"))) {
+        return;
+    }
+
+    Player player = event.getPlayer();
+    ResetSession session = sessions.remove(player.getUniqueId());
+    if (session == null || session.isExpired()) {
+        player.sendMessage("That confirmation expired.");
+        return;
+    }
+
+    if (!player.hasPermission("myplugin.reset")) {
+        return;
+    }
+
+    resetPlayerData(player.getUniqueId());
+    player.clearDialog();
+}
+```
+
+Do not execute arbitrary commands from the identifier or JSON. Map a small allow-list of identifiers to domain actions, validate JSON types and length, and rate-limit costly actions.
+
+## Workflow state
+
+Opening a dialog does not prove that the next matching click belongs to the same business operation. Keep a server-side session containing a nonce, expected action IDs, subject ID, expiry, and whether the action has already completed. Make completion idempotent so duplicate or delayed clicks cannot charge currency twice.
+
+Clean sessions on `PlayerQuitEvent`, timeout, plugin disable, and after any terminal action.
+
+## Compatibility
+
+Dialogs are a recent, experimental client feature. If your plugin supports older server/client combinations, isolate direct calls in an adapter. A safe fallback is a chest confirmation menu, clickable chat message, or command confirmation token.
+
+Official references: [Player dialog methods](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Player.html) and [PlayerCustomClickEvent](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/player/PlayerCustomClickEvent.html).
