@@ -212,7 +212,7 @@ if (player.hasPermission("myplugin.greet")) {
 ```
 
 <Warning>
-  Permissions registered via `addPermission` exist only for the current server session. They are not persisted to disk and will be re-registered each time your plugin enables. If you change a permission's `PermissionDefault` at runtime using `Permission.setDefault()`, call `Permission.recalculatePermissibles()` afterward so all online players' effective permissions are updated immediately.
+  Permissions registered via `addPermission` exist only for the current server session. They are not persisted to disk and will be re-registered each time your plugin enables. If you modify a permission's children map directly (via `Permission.getChildren()`), call `Permission.recalculatePermissibles()` afterward so all online players' effective permissions are updated immediately. Note that `Permission.setDefault()` calls `recalculatePermissibles()` internally — you do not need to call it manually after `setDefault()`.
 </Warning>
 
 ## Putting It All Together

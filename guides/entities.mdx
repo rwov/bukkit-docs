@@ -1,7 +1,7 @@
 ---
-title: "Spawning and Controlling Entities with Bukkit"
+title: "Bukkit Entity API: Spawning, AI, and Data Management"
 sidebarTitle: "Entities"
-description: "Spawn, find, and manipulate Minecraft entities — mobs, projectiles, and more — using the Bukkit Entity and LivingEntity APIs."
+description: "Spawn, find, and manipulate Minecraft entities — mobs, projectiles, and more — using the Bukkit Entity and LivingEntity APIs in your plugins."
 ---
 
 Every mob, projectile, item drop, and decoration in a Minecraft world is an entity. Bukkit represents all of them through a rich interface hierarchy rooted at `Entity`, which gives you access to position, velocity, naming, persistence metadata, and the ability to remove an entity from the world. As you move down the hierarchy toward `LivingEntity`, `Mob`, and specific types like `Zombie` or `Creeper`, you gain access to increasingly specialized behaviour such as AI control, health management, and equipment. This guide shows you how to work with entities at every level of that hierarchy.

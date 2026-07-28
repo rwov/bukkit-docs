@@ -1,7 +1,7 @@
 ---
-title: "BukkitScheduler API Reference: Tasks and Timers"
+title: "BukkitScheduler: Sync, Async Tasks, Timers and Cancellation"
 sidebarTitle: "Scheduler API"
-description: "Complete reference for BukkitScheduler: sync and async delayed tasks, repeating timers, BukkitRunnable, and task cancellation."
+description: "Complete reference for BukkitScheduler: run sync and async tasks, set repeating timers, use BukkitRunnable, and cancel tasks safely."
 ---
 
 The `BukkitScheduler` manages all time-based and background work in Bukkit plugins. Everything runs in terms of **ticks**: the server processes 20 ticks per second under normal load, so 1 second equals 20 ticks, 1 minute equals 1,200 ticks, and so on. You can schedule a task to run once on the next tick, after a delay, or on a fixed repeating interval — either on the main server thread (synchronous) or on a background thread (asynchronous). Access the scheduler via `Bukkit.getScheduler()` or `getServer().getScheduler()`.

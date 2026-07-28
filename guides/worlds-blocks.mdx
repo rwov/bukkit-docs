@@ -1,7 +1,7 @@
 ---
-title: "Working with Worlds and Blocks in Bukkit"
+title: "Worlds and Blocks: The Bukkit World and Block API Guide"
 sidebarTitle: "Worlds & Blocks"
-description: "Load worlds, query and set blocks, use BlockData, read chunk data, and create custom world generators with the Bukkit World API."
+description: "Load worlds, query and set blocks, use BlockData, manage chunks, and build custom world generators using the Bukkit World and Block API."
 ---
 
 Minecraft's `World` interface is one of the largest and most powerful APIs in Bukkit. It gives you access to every block coordinate, chunk, entity, environmental setting, and particle effect within a dimension. The companion `Block` interface represents a single, live block at a specific location and lets you read or change its material and `BlockData` state. Together these two interfaces let you build anything from block replacement utilities to full procedural level generators.
@@ -45,6 +45,7 @@ public class WorldLookup {
 `world.getBlockAt(x, y, z)` returns the live `Block` object at those coordinates. You can read its material type, replace it with a new type, or inspect its full `BlockData` state.
 
 ```java BlockExample.java
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -247,31 +248,24 @@ public class ParticleExample {
 
 ## Custom World Generators
 
-For procedurally generated worlds, extend `ChunkGenerator` and override `generateSurface()` (or the legacy `generateChunkData()` method) to fill chunk sections with custom materials. Register your generator by returning it from `JavaPlugin.getDefaultWorldGenerator()`.
+For procedurally generated worlds, extend `ChunkGenerator` and override `generateSurface()` to fill chunk sections with custom materials. Register your generator by returning it from `JavaPlugin.getDefaultWorldGenerator()`.
 
 ```java FlatWorldGenerator.java
-import org.bukkit.World;
+import org.bukkit.Material;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.ChunkGenerator.ChunkData;
 import org.bukkit.generator.WorldInfo;
-import org.bukkit.Material;
 import java.util.Random;
 
 public class FlatWorldGenerator extends ChunkGenerator {
 
     @Override
-    public ChunkData generateChunkData(
-            World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
-
-        ChunkData chunk = createChunkData(world);
-
-        // Fill layers: bedrock at 0, stone 1-60, grass at 61
-        chunk.setRegion(0, 0, 0, 16, 1, 16, Material.BEDROCK);
-        chunk.setRegion(0, 1, 0, 16, 60, 16, Material.STONE);
-        chunk.setRegion(0, 60, 0, 16, 61, 16, Material.DIRT);
-        chunk.setRegion(0, 61, 0, 16, 62, 16, Material.GRASS_BLOCK);
-
-        return chunk;
+    public void generateSurface(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {
+        // Fill layers: bedrock at 0, stone 1–59, dirt at 60, grass at 61
+        chunkData.setRegion(0, 0, 0, 16, 1, 16, Material.BEDROCK);
+        chunkData.setRegion(0, 1, 0, 16, 60, 16, Material.STONE);
+        chunkData.setRegion(0, 60, 0, 16, 61, 16, Material.DIRT);
+        chunkData.setRegion(0, 61, 0, 16, 62, 16, Material.GRASS_BLOCK);
     }
 }
 ```

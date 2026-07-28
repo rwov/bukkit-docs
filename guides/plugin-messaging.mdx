@@ -1,7 +1,7 @@
 ---
 title: "Plugin Messaging Channels for Cross-Server Communication"
 sidebarTitle: "Plugin Messaging"
-description: "Use Bukkit plugin messaging channels to send and receive data between your plugin and a BungeeCord/Velocity proxy or client mods."
+description: "Use Bukkit plugin messaging channels to send and receive data between your plugin and a BungeeCord/Velocity proxy or client-side mods."
 ---
 
 Plugin messaging channels are a low-level byte-pipe that Minecraft uses to pass custom data between a server plugin and either the connected proxy (BungeeCord or Velocity) or a client-side mod. Each message is identified by a **channel name** and carries a raw byte array payload. Your plugin registers which channels it wants to send on (outgoing) or listen on (incoming), and the Bukkit `Messenger` handles routing. Channel names must follow the `namespace:name` format and consist only of `[a-z0-9/._-]` — the legacy `"BungeeCord"` channel is the notable exception to this rule.

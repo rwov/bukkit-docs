@@ -1,7 +1,7 @@
 ---
 title: "Task Scheduling in Bukkit: Sync, Async, and Repeating"
 sidebarTitle: "Scheduler"
-description: "Schedule delayed and repeating tasks on and off the main thread using BukkitScheduler and BukkitRunnable in your plugin."
+description: "Schedule delayed, repeating, and async tasks using BukkitScheduler and BukkitRunnable. Learn tick timing, cancellation, and thread-safe patterns."
 ---
 
 Bukkit's scheduler lets you defer work to a later tick, run code on a fixed interval, or push expensive operations off the main server thread entirely. The server runs at 20 ticks per second, so a delay of `20L` ticks equals one second, `200L` equals ten seconds, and so on. You access the scheduler through `Bukkit.getScheduler()` (or `getServer().getScheduler()` inside your plugin class), and every scheduling method returns a `BukkitTask` whose ID you can use to cancel the work later.

@@ -247,6 +247,52 @@ These methods expose the three dependency lists that Bukkit reads to determine p
 
 ---
 
+## Provides, Libraries, and Log Prefix
+
+These three optional fields give you runtime access to API aliases, bundled library declarations, and the logging prefix your plugin uses in the server console.
+
+<ResponseField name="getProvides()" type="List&lt;String&gt;" required>
+  Returns an immutable list of API aliases this plugin declares via the `provides`
+  field. Other plugins can list one of these aliases in their `depend` or
+  `softdepend` lists and Bukkit will treat this plugin as satisfying that
+  dependency, even if the real plugin name is different. Returns an empty list
+  when the field is omitted.
+
+  ```yaml title="plugin.yml"
+  provides: [Hell]
+  ```
+
+  ```java title="Reading the provides list at runtime"
+  List<String> aliases = getDescription().getProvides();
+  getLogger().info("This plugin provides: " + aliases);
+  ```
+</ResponseField>
+
+<ResponseField name="getLibraries()" type="List&lt;String&gt;" required>
+  Returns an immutable list of Maven coordinate strings from the `libraries`
+  field. Bukkit's plugin loader downloads and adds these JARs to the plugin's
+  classpath at startup, letting you use third-party libraries without shading
+  them into your JAR. Returns an empty list when the field is omitted.
+
+  ```yaml title="plugin.yml"
+  libraries:
+    - com.squareup.okhttp3:okhttp:4.9.0
+  ```
+</ResponseField>
+
+<ResponseField name="getPrefix()" type="String" required>
+  Returns the string from the `prefix` field, or `null` if the field was omitted.
+  When set, this value replaces the plugin's name as the prefix on all log
+  messages produced by `getLogger()`. Use it when your plugin's actual name is
+  long and you want shorter console output.
+
+  ```yaml title="plugin.yml"
+  prefix: ex-why-zee
+  ```
+</ResponseField>
+
+---
+
 ## Load Order
 
 <ResponseField name="getLoad()" type="PluginLoadOrder" required>

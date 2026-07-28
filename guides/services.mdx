@@ -1,7 +1,7 @@
 ---
 title: "Sharing APIs Between Plugins with the Services Manager"
 sidebarTitle: "Services"
-description: "Register and consume shared services between Bukkit plugins using ServicesManager for clean plugin-to-plugin API integration."
+description: "Register and consume shared service interfaces between Bukkit plugins using ServicesManager and ServicePriority for clean plugin-to-plugin API integration."
 ---
 
 The Bukkit Services Manager lets your plugin expose a Java interface as a runtime-discoverable service, and lets other plugins look that service up without knowing which plugin provides it. Rather than hard-coding `Plugin.getPlugin(EconomyPlugin.class)` and creating a tight compile-time coupling, the consumer simply asks the server for "whoever is providing `EconomyService`" and receives the highest-priority registered implementation. This is the same mechanism that Vault uses to decouple economy, permission, and chat plugins from their consumers.

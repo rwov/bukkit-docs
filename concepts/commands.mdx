@@ -111,14 +111,14 @@ public class GreetCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String displayName;
 
-        if (sender instanceof Player player) {
-            displayName = player.getDisplayName();
+        if (sender instanceof Player) {
+            displayName = ((Player) sender).getDisplayName();
         } else {
             // ConsoleCommandSender or other non-player source
             displayName = "Console";
         }
 
-        getServer().broadcastMessage("§6" + displayName + " triggered a global event!");
+        Bukkit.broadcastMessage("§6" + displayName + " triggered a global event!");
         return true;
     }
     ```
@@ -127,7 +127,7 @@ public class GreetCommand implements CommandExecutor {
 
 ## Tab Completion
 
-Implement `org.bukkit.command.TabCompleter` to control the suggestion list shown when a player presses Tab. The `onTabComplete` method receives the same `sender`, `command`, `label`, and `args` parameters as `onCommand`. Return a `List<String>` of possible completions for the last (partial) argument, or `null` to fall back to Bukkit's default behaviour.
+Implement `org.bukkit.command.TabCompleter` to control the suggestion list shown when a player presses Tab. The `onTabComplete` method receives the same `sender`, `command`, `label`, and `args` parameters as `onCommand`. Return a `List<String>` of possible completions for the last (partial) argument, or `null` to fall back to the command executor's default tab completion.
 
 Use `StringUtil.copyPartialMatches` from `org.bukkit.util.StringUtil` to filter a list of candidates down to those that start with what the player has already typed:
 

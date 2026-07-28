@@ -1,5 +1,5 @@
 ---
-title: "World Interface Reference: Terrain, Entities, and Environment"
+title: "World Interface Reference: Terrain, Entities and Environment"
 sidebarTitle: "World"
 description: "The World interface lets you query and modify blocks, spawn entities, manage time and weather, and access chunks in a Minecraft world."
 ---
@@ -228,7 +228,7 @@ for (Player p : world.getPlayers()) {
 </ResponseField>
 
 ```java title="Playing an effect at the player's location"
-world.spawnParticle(Particle.EXPLOSION_LARGE, player.getLocation(), 10);
+world.spawnParticle(Particle.EXPLOSION_EMITTER, player.getLocation(), 10);
 world.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
 ```
 
