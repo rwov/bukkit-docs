@@ -8,6 +8,21 @@ icon: "network-wired"
 
 Exchange validated binary messages with clients and proxies.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+sequenceDiagram
+  participant P as Plugin
+  participant S as Server
+  participant X as External system
+  P->>S: Validate request
+  S->>X: Send bounded message
+  X-->>S: Return response
+  S-->>P: Apply on main thread
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

@@ -5,6 +5,18 @@ description: "Customize the links screen and use per-player client illusions, ch
 
 Current Spigot exposes several client-facing features that do not change authoritative server state.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Player state"] --> B["Plugin service"]
+  B --> C["Bukkit player API"]
+  C --> D["Client feedback"]
+  C --> E["Server-side result"]
+```
+{/* visual-map:end */}
+
 ## Server links
 
 The server has a `ServerLinks` collection, and `Player.sendLinks(ServerLinks)` sends a collection to one player. Known link types receive client-localized labels and may have special client behavior.

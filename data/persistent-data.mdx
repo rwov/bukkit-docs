@@ -8,6 +8,19 @@ icon: "database"
 
 Store versioned namespaced data on items, entities, chunks, and worlds.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["External or stored data"] --> B["Parse"]
+  B --> C{"Validate schema"}
+  C -->|Valid| D["Domain model"]
+  C -->|Invalid| E["Targeted error"]
+  D --> F["Persistent data containers"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

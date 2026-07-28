@@ -8,6 +8,24 @@ icon: "table-cells"
 
 Build safe custom menus, buttons, navigation, pagination, and sessions.
 
+{/* visual-map:start */}
+<Frame caption="A chest-style Server Navigator menu rendered as a practical plugin UI.">
+  ![GUI menus example](/assets/modern/inventory-menu.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Create view or dialog"] --> B["Open for player"]
+  B --> C["Receive interaction"]
+  C --> D{"Session and action valid?"}
+  D -->|Yes| E["Run domain action"]
+  D -->|No| F["Ignore or close"]
+  E --> G["Render next state"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

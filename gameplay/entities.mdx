@@ -8,6 +8,22 @@ icon: "dragon"
 
 Spawn, query, customize, track, move, and remove every entity family.
 
+{/* visual-map:start */}
+<Frame caption="A TextDisplay, ItemDisplay, and Interaction entity combined into one clickable hologram.">
+  ![Entities and mobs example](/assets/modern/display-hologram.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Entities and mobs"]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

@@ -6,6 +6,18 @@ icon: "diagram-project"
 
 # Types and contracts
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin code"] --> B["Public API contract"]
+  B --> C["Server-owned object"]
+  C --> D["Validated mutation"]
+  D --> E["Observable game state"]
+```
+{/* visual-map:end */}
+
 ## Server-owned interfaces
 
 Most Bukkit objects are interfaces implemented by the server. Obtain them from API methods rather than implementing or constructing them.

@@ -6,6 +6,18 @@ description: "Spawn, find, and manipulate Minecraft entities — mobs, projectil
 
 Every mob, projectile, item drop, and decoration in a Minecraft world is an entity. Bukkit represents all of them through a rich interface hierarchy rooted at `Entity`, which gives you access to position, velocity, naming, persistence metadata, and the ability to remove an entity from the world. As you move down the hierarchy toward `LivingEntity`, `Mob`, and specific types like `Zombie` or `Creeper`, you gain access to increasingly specialized behaviour such as AI control, health management, and equipment. This guide shows you how to work with entities at every level of that hierarchy.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Bukkit Entity API: Spawning, AI..."]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Entity Hierarchy
 
 Understanding the inheritance tree helps you know which interface to cast to:

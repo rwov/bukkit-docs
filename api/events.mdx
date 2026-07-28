@@ -6,6 +6,19 @@ description: "Reference for the Bukkit event system: Event base class, @EventHan
 
 The Bukkit event system lets your plugin react to things that happen on the server — players joining, blocks breaking, entities spawning, and much more — without modifying server internals. You write a listener class, annotate handler methods with `@EventHandler`, and register the listener with the `PluginManager`. Bukkit then calls your methods automatically whenever matching events fire. This reference covers every core class and interface you need to work with the event system, including how to define your own custom events.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Server action"] --> B["Bukkit Event System: EventHandl..."]
+  B --> C["Registered listener"]
+  C --> D{"Validate state"}
+  D -->|Allowed| E["Apply result"]
+  D -->|Rejected| F["Leave unchanged"]
+```
+{/* visual-map:end */}
+
 ---
 
 ## The `Event` Abstract Class

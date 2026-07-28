@@ -8,6 +8,19 @@ icon: "power-off"
 
 Use load, enable, disable, dependency order, and deterministic cleanup.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+stateDiagram-v2
+  [*] --> Loaded
+  Loaded --> Enabled: onEnable
+  Enabled --> Runtime: listeners and tasks
+  Runtime --> Disabled: onDisable
+  Disabled --> [*]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

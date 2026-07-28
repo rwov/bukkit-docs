@@ -8,6 +8,19 @@ icon: "brackets-curly"
 
 `org.bukkit.command.defaults`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Command sender"] --> B["Parse arguments"]
+  B --> C{"Permission and input valid?"}
+  C -->|Yes| D["Call service"]
+  C -->|No| E["Return feedback"]
+  D --> F["Default commands"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

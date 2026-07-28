@@ -6,6 +6,20 @@ description: "The World interface lets you query and modify blocks, spawn entiti
 
 The `World` interface represents a single Minecraft dimension — the overworld, the Nether, the End, or any custom world your plugin creates. Through it you can read and write individual blocks, spawn and query entities, adjust weather and time, play effects, and manage the chunks that make up the terrain. Every `Player`, `Entity`, and `Block` belongs to a `World`, so you will use this interface constantly wherever location-sensitive logic is needed.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Server"] --> B["World"]
+  B --> C["Loaded chunk"]
+  C --> D["Block state"]
+  C --> E["Entities"]
+  D --> F["Events and updates"]
+  E --> F
+```
+{/* visual-map:end */}
+
 ---
 
 ## Block Access

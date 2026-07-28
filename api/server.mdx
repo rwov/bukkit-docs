@@ -6,6 +6,18 @@ description: "The Server interface is the central gateway to players, worlds, pl
 
 The `Server` interface is the top-level entry point for the Bukkit API. It gives you access to every online player, every loaded world, the plugin manager, the task scheduler, and a wide range of server-wide utilities. You will interact with `Server` constantly throughout plugin development, whether you are broadcasting messages, spawning entities, or kicking off background tasks.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin code"] --> B["Public API contract"]
+  B --> C["Server-owned object"]
+  C --> D["Validated mutation"]
+  D --> E["Observable game state"]
+```
+{/* visual-map:end */}
+
 ## Accessing the Server
 
 You can retrieve the `Server` instance in two equivalent ways:

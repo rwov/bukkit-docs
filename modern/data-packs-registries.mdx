@@ -5,6 +5,19 @@ description: "Discover data-driven content safely instead of hard-coding assumpt
 
 Modern Minecraft moves content into registries and data packs. A plugin should ask the running server what exists rather than assuming every key is available.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["External or stored data"] --> B["Parse"]
+  B --> C{"Validate schema"}
+  C -->|Valid| D["Domain model"]
+  C -->|Invalid| E["Targeted error"]
+  D --> F["Data Packs, Registries, Tags, a..."]
+```
+{/* visual-map:end */}
+
 ## Data packs
 
 Use `Bukkit.getDataPackManager()` or `Server.getDataPackManager()` to inspect installed packs and their state. Data packs can define or modify recipes, loot, tags, structures, world-generation content, dialogs, and other registered content supported by the target Minecraft version.

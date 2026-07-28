@@ -6,6 +6,19 @@ description: "Complete reference for BukkitScheduler: run sync and async tasks, 
 
 The `BukkitScheduler` manages all time-based and background work in Bukkit plugins. Everything runs in terms of **ticks**: the server processes 20 ticks per second under normal load, so 1 second equals 20 ticks, 1 minute equals 1,200 ticks, and so on. You can schedule a task to run once on the next tick, after a delay, or on a fixed repeating interval — either on the main server thread (synchronous) or on a background thread (asynchronous). Access the scheduler via `Bukkit.getScheduler()` or `getServer().getScheduler()`.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Main thread snapshot"] --> B["Async I/O or CPU work"]
+  B --> C["Schedule continuation"]
+  C --> D{"State still valid?"}
+  D -->|Yes| E["Apply on main thread"]
+  D -->|No| F["Discard stale result"]
+```
+{/* visual-map:end */}
+
 <Note>
   Under heavy server load the tick rate can drop below 20 per second. Tick-based delays are therefore approximate, not wall-clock precise. If your plugin needs real-time accuracy, record `System.currentTimeMillis()` inside the task and adjust accordingly.
 </Note>

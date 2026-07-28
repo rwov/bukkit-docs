@@ -5,6 +5,23 @@ description: "Create a modern component-based consumable with secure identity, c
 
 This pattern separates client behavior from server authority.
 
+{/* visual-map:start */}
+<Frame caption="A component-driven consumable alongside other modern custom items.">
+  ![Build a Custom Consumable Item example](/assets/modern/item-components.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Logical item ID"] --> B["ItemStack"]
+  B --> C["ItemMeta and components"]
+  C --> D["Client presentation"]
+  B --> E["Persistent data"]
+  E --> F["Server-side validation"]
+```
+{/* visual-map:end */}
+
 ## 1. Create the item
 
 ```java

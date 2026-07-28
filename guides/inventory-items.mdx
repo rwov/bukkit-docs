@@ -6,6 +6,24 @@ description: "Create ItemStacks, edit item metadata, build custom GUI inventorie
 
 Items in Bukkit are represented by `ItemStack` — a combination of a `Material` type, a stack count, and an optional `ItemMeta` object that holds display names, lore, enchantments, and other rich data. The `Inventory` interface sits above all containers (player inventories, chests, custom GUI windows), giving you a uniform API for querying and mutating slot contents. This guide covers the full lifecycle of an item, from construction to giving it to a player, building custom GUI inventories, and responding to inventory click events.
 
+{/* visual-map:start */}
+<Frame caption="A practical inventory view with plugin-owned buttons and pagination controls.">
+  ![Bukkit Inventory API: Items, Metadata, and Custom GUIs example](/assets/modern/inventory-menu.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Create view or dialog"] --> B["Open for player"]
+  B --> C["Receive interaction"]
+  C --> D{"Session and action valid?"}
+  D -->|Yes| E["Run domain action"]
+  D -->|No| F["Ignore or close"]
+  E --> G["Render next state"]
+```
+{/* visual-map:end */}
+
 ## Creating an ItemStack
 
 Construct an `ItemStack` with a `Material` and an optional amount. The default amount is `1` when you use the single-argument constructor.

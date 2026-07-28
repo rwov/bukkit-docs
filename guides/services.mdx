@@ -6,6 +6,19 @@ description: "Register and consume shared service interfaces between Bukkit plug
 
 The Bukkit Services Manager lets your plugin expose a Java interface as a runtime-discoverable service, and lets other plugins look that service up without knowing which plugin provides it. Rather than hard-coding `Plugin.getPlugin(EconomyPlugin.class)` and creating a tight compile-time coupling, the consumer simply asks the server for "whoever is providing `EconomyService`" and receives the highest-priority registered implementation. This is the same mechanism that Vault uses to decouple economy, permission, and chat plugins from their consumers.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Commands and listeners"] --> B["Application services"]
+  B --> C["Domain rules"]
+  B --> D["Bukkit adapter"]
+  B --> E["Repository or integration"]
+  D --> F["Minecraft server"]
+```
+{/* visual-map:end */}
+
 ## Registering a service
 
 Call `getServer().getServicesManager().register(Class, implementation, plugin, priority)` in your provider plugin's `onEnable()`. The first argument is the **interface class** (the contract), the second is your **implementing object**, the third is your plugin instance (used for cleanup tracking), and the fourth is a `ServicePriority`.

@@ -8,6 +8,19 @@ icon: "brackets-curly"
 
 `org.bukkit.loot`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Logical item ID"] --> B["ItemStack"]
+  B --> C["ItemMeta and components"]
+  C --> D["Client presentation"]
+  B --> E["Persistent data"]
+  E --> F["Server-side validation"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

@@ -8,6 +8,18 @@ icon: "brackets-curly"
 
 `org.bukkit.util.permissions`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Player or sender"] --> B{"Has permission?"}
+  B -->|Yes| C["Run protected action"]
+  B -->|No| D["Explain denial"]
+  C --> E["Audit or persist result"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

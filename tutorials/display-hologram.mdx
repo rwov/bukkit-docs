@@ -5,6 +5,22 @@ description: "Combine TextDisplay, ItemDisplay, Interaction, persistent IDs, and
 
 A display hologram is a small scene: visual entities plus a separate interaction target.
 
+{/* visual-map:start */}
+<Frame caption="The clickable reward hologram built in this tutorial.">
+  ![Build a Clickable Display Hologram example](/assets/modern/display-hologram.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Spawn or obtain entity"] --> B["Configure public API"]
+  B --> C["Listen for lifecycle events"]
+  C --> D["Update owned state"]
+  D --> E["Remove and clean up"]
+```
+{/* visual-map:end */}
+
 ## 1. Spawn the scene
 
 ```java

@@ -6,6 +6,18 @@ description: "Bukkit is the standard Java API for Minecraft server plugins. Lear
 
 Bukkit is the Java API that lets you extend and customize a Minecraft server — adding new commands, reacting to game events, manipulating the world, and building entirely new gameplay systems. You write a plugin as a standard Java library, drop it into your server's `plugins/` folder, and the server loads it automatically at startup. Bukkit gives you the stable, documented surface you code against; the underlying server implementation handles the rest.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Java source"] --> B["Maven or Gradle"]
+  B --> C["Plugin JAR"]
+  C --> D["Test server plugins folder"]
+  D --> E["Enable, test, iterate"]
+```
+{/* visual-map:end */}
+
 ## How Bukkit fits in
 
 The Bukkit name covers several related but distinct layers that are easy to confuse when you're getting started:

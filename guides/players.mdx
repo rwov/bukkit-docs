@@ -6,6 +6,18 @@ description: "Send messages, teleport, modify inventory, check permissions, and 
 
 The Bukkit `Player` interface is your primary gateway to every connected player on your server. It extends `HumanEntity`, `OfflinePlayer`, and `Permissible`, which means a single `Player` object gives you access to everything from chat messaging and teleportation to inventory management and permission checks. This guide walks you through the most common operations you'll perform on players in your plugins.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Player state"] --> B["Plugin service"]
+  B --> C["Bukkit player API"]
+  C --> D["Client feedback"]
+  C --> E["Server-side result"]
+```
+{/* visual-map:end */}
+
 ## Getting a Player Reference
 
 Before you can interact with a player, you need a reference to their `Player` object. Bukkit exposes several ways to obtain one.

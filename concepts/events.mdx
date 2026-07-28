@@ -6,6 +6,19 @@ description: "Learn how to listen to Bukkit events, set handler priority, cancel
 
 Bukkit's event system is the primary way your plugin reacts to what happens on the server. Whenever something occurs in the game — a player joining, a block being broken, a creature spawning — the server fires a corresponding `Event` object and calls every registered handler in priority order. By implementing the `Listener` interface and annotating your methods with `@EventHandler`, you can intercept these moments, read their data, and in many cases cancel or modify the outcome entirely.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Server action"] --> B["Handling Game Events in Bukkit ..."]
+  B --> C["Registered listener"]
+  C --> D{"Validate state"}
+  D -->|Allowed| E["Apply result"]
+  D -->|Rejected| F["Leave unchanged"]
+```
+{/* visual-map:end */}
+
 ## How Events Work
 
 When an in-game action occurs, Bukkit creates an event object that carries all relevant context (the player involved, the block that was broken, the damage amount, etc.) and passes it to the `PluginManager`, which dispatches it to all registered listeners sorted by `EventPriority`. Listeners run synchronously on the main server thread unless the event class is marked async.

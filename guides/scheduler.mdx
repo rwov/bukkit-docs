@@ -6,6 +6,19 @@ description: "Schedule delayed, repeating, and async tasks using BukkitScheduler
 
 Bukkit's scheduler lets you defer work to a later tick, run code on a fixed interval, or push expensive operations off the main server thread entirely. The server runs at 20 ticks per second, so a delay of `20L` ticks equals one second, `200L` equals ten seconds, and so on. You access the scheduler through `Bukkit.getScheduler()` (or `getServer().getScheduler()` inside your plugin class), and every scheduling method returns a `BukkitTask` whose ID you can use to cancel the work later.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Main thread snapshot"] --> B["Async I/O or CPU work"]
+  B --> C["Schedule continuation"]
+  C --> D{"State still valid?"}
+  D -->|Yes| E["Apply on main thread"]
+  D -->|No| F["Discard stale result"]
+```
+{/* visual-map:end */}
+
 ## Sync delayed task
 
 Use `runTaskLater(Plugin plugin, Runnable task, long delay)` to execute a block of code on the **main server thread** after a set number of ticks. This is safe to call any Bukkit API from.

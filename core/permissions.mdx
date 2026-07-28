@@ -8,6 +8,18 @@ icon: "key"
 
 Design nodes, children, defaults, attachments, and secure authorization.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Player or sender"] --> B{"Has permission?"}
+  B -->|Yes| C["Run protected action"]
+  B -->|No| D["Explain denial"]
+  C --> E["Audit or persist result"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

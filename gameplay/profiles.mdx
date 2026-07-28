@@ -8,6 +8,18 @@ icon: "id-card"
 
 Work with PlayerProfile, textures, identity, and caching.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Player state"] --> B["Plugin service"]
+  B --> C["Bukkit player API"]
+  C --> D["Client feedback"]
+  C --> E["Server-side result"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

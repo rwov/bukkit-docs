@@ -5,6 +5,18 @@ description: "A map of the current Bukkit and Spigot APIs for menus, dialogs, it
 
 The current Spigot API exposes far more of modern Minecraft than the classic event-command-inventory tutorials show. This section focuses on APIs present in the current **Spigot-API 26.2-R0.1-SNAPSHOT** documentation.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Modern Minecraft APIs"]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 <Warning>
 Some modern surfaces are marked `@Experimental`. Compile against the exact API you target, feature-detect when practical, and test on the exact server build you ship.
 </Warning>

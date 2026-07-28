@@ -8,6 +8,19 @@ icon: "gauge-high"
 
 Protect tick time with profiling, batching, caching, and bounded work.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Main thread snapshot"] --> B["Async I/O or CPU work"]
+  B --> C["Schedule continuation"]
+  C --> D{"State still valid?"}
+  D -->|Yes| E["Apply on main thread"]
+  D -->|No| F["Discard stale result"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

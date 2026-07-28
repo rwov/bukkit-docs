@@ -8,6 +8,20 @@ icon: "brackets-curly"
 
 `org.bukkit.inventory.meta.tags`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Create view or dialog"] --> B["Open for player"]
+  B --> C["Receive interaction"]
+  C --> D{"Session and action valid?"}
+  D -->|Yes| E["Run domain action"]
+  D -->|No| F["Ignore or close"]
+  E --> G["Render next state"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

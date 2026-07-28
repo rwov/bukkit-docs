@@ -8,6 +8,19 @@ icon: "terminal"
 
 A permission-aware command with parsing and tab completion.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Command sender"] --> B["Parse arguments"]
+  B --> C{"Permission and input valid?"}
+  C -->|Yes| D["Call service"]
+  C -->|No| E["Return feedback"]
+  D --> F["Build a complete command"]
+```
+{/* visual-map:end */}
+
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture

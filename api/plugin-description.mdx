@@ -6,6 +6,18 @@ description: "Access your plugin's metadata at runtime via PluginDescriptionFile
 
 When Bukkit loads your plugin, it parses your `plugin.yml` and makes all of that information available at runtime through a `PluginDescriptionFile` instance. You obtain this object by calling `getDescription()` on your plugin — for example, `this.getDescription()` from inside a `JavaPlugin` subclass. Every method on `PluginDescriptionFile` maps directly to a key in your `plugin.yml`, so this page is both a runtime API reference and a guide to what each YAML field means in practice.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin code"] --> B["Public API contract"]
+  B --> C["Server-owned object"]
+  C --> D["Validated mutation"]
+  D --> E["Observable game state"]
+```
+{/* visual-map:end */}
+
 <Note>
   Three fields are **required** in every `plugin.yml`: `name`, `version`, and
   `main`. Bukkit refuses to load a plugin that omits any of them, and

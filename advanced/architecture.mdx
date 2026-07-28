@@ -8,6 +8,19 @@ icon: "building"
 
 Design modular services, repositories, adapters, and feature ownership.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Commands and listeners"] --> B["Application services"]
+  B --> C["Domain rules"]
+  B --> D["Bukkit adapter"]
+  B --> E["Repository or integration"]
+  D --> F["Minecraft server"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

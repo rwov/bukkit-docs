@@ -6,6 +6,20 @@ description: "Load worlds, query and set blocks, use BlockData, manage chunks, a
 
 Minecraft's `World` interface is one of the largest and most powerful APIs in Bukkit. It gives you access to every block coordinate, chunk, entity, environmental setting, and particle effect within a dimension. The companion `Block` interface represents a single, live block at a specific location and lets you read or change its material and `BlockData` state. Together these two interfaces let you build anything from block replacement utilities to full procedural level generators.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Server"] --> B["World"]
+  B --> C["Loaded chunk"]
+  C --> D["Block state"]
+  C --> E["Entities"]
+  D --> F["Events and updates"]
+  E --> F
+```
+{/* visual-map:end */}
+
 ## Getting a World Reference
 
 The `Bukkit` server class exposes static helpers to retrieve world instances by name or UUID.

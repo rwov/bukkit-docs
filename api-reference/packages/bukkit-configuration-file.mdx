@@ -8,6 +8,19 @@ icon: "brackets-curly"
 
 `org.bukkit.configuration.file`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["External or stored data"] --> B["Parse"]
+  B --> C{"Validate schema"}
+  C -->|Valid| D["Domain model"]
+  C -->|Invalid| E["Targeted error"]
+  D --> F["File configuration"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types
