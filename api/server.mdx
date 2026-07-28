@@ -1,0 +1,243 @@
+---
+title: "Server Interface Reference: Core Bukkit Server API"
+sidebarTitle: "Server"
+description: "The Server interface is the central gateway to players, worlds, plugins, and scheduling. Access it via Bukkit.getServer() or plugin.getServer()."
+---
+
+The `Server` interface is the top-level entry point for the Bukkit API. It gives you access to every online player, every loaded world, the plugin manager, the task scheduler, and a wide range of server-wide utilities. You will interact with `Server` constantly throughout plugin development, whether you are broadcasting messages, spawning entities, or kicking off background tasks.
+
+## Accessing the Server
+
+You can retrieve the `Server` instance in two equivalent ways:
+
+```java title="Accessing the Server"
+// From anywhere via the static Bukkit façade
+Server server = Bukkit.getServer();
+
+// From inside your JavaPlugin subclass
+Server server = getServer();
+```
+
+Both calls return the same singleton. Prefer `getServer()` inside your plugin class for clarity; use `Bukkit.getServer()` in utility classes that do not extend `JavaPlugin`.
+
+---
+
+## Player Management
+
+These methods let you look up connected players, retrieve offline player records, and control the server's player capacity.
+
+<ResponseField name="getOnlinePlayers()" type="Collection<? extends Player>">
+  Returns an unmodifiable live view of every player currently logged in. The collection reflects real-time changes to the player list, so size operations are zero-allocation. Do not iterate this collection from an asynchronous thread.
+</ResponseField>
+
+<ResponseField name="getPlayer(String name)" type="@Nullable Player">
+  Finds a connected player whose name most closely matches the supplied string (partial, case-insensitive). Returns `null` if no match is found. Use `getPlayerExact(String)` when you need an exact match.
+
+  <ParamField path="name" type="String" required>
+    The full or partial name of the player to search for.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="getPlayer(UUID id)" type="@Nullable Player">
+  Looks up a currently online player by their unique ID. Returns `null` if the player is not online.
+
+  <ParamField path="id" type="UUID" required>
+    The player's unique identifier.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="getOfflinePlayer(UUID id)" type="@NotNull OfflinePlayer">
+  Returns an `OfflinePlayer` record for any player who has ever joined the server, whether or not they are currently online. The returned object always has a non-null UUID.
+
+  <ParamField path="id" type="UUID" required>
+    The unique identifier of the player to retrieve.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="getMaxPlayers()" type="int">
+  Returns the maximum number of players the server will allow to be logged in simultaneously.
+</ResponseField>
+
+<ResponseField name="setMaxPlayers(int maxPlayers)" type="void">
+  Overrides the maximum concurrent player count at runtime.
+
+  <ParamField path="maxPlayers" type="int" required>
+    The new player cap. Must be a positive integer.
+  </ParamField>
+</ResponseField>
+
+```java title="Player lookup example"
+Player target = server.getPlayer("Steve");
+if (target != null) {
+    target.sendMessage("Hello, " + target.getName() + "!");
+}
+```
+
+---
+
+## World Management
+
+Use these methods to access existing worlds and create new ones.
+
+<ResponseField name="getWorld(String name)" type="@Nullable World">
+  Returns the loaded world with the given name, or `null` if no such world is loaded.
+
+  <ParamField path="name" type="String" required>
+    The exact name of the world folder.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="getWorld(UUID uid)" type="@Nullable World">
+  Returns the loaded world with the given unique ID, or `null` if it is not loaded.
+
+  <ParamField path="uid" type="UUID" required>
+    The world's unique identifier.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="getWorlds()" type="List<World>">
+  Returns a list of all worlds currently loaded by the server, including the default overworld, any linked Nether or End dimensions, and any custom worlds your plugin has created.
+</ResponseField>
+
+<ResponseField name="createWorld(WorldCreator creator)" type="@Nullable World">
+  Creates or loads a world using the settings defined in a `WorldCreator` configuration object. If the world already exists on disk it will be loaded rather than regenerated.
+
+  <ParamField path="creator" type="WorldCreator" required>
+    A fully configured `WorldCreator` describing the world name, environment, seed, and optional custom generator.
+  </ParamField>
+</ResponseField>
+
+```java title="Creating a flat world"
+World flatWorld = server.createWorld(
+    new WorldCreator("my_flat_world")
+        .environment(World.Environment.NORMAL)
+        .type(WorldType.FLAT)
+);
+```
+
+---
+
+## Plugin Management
+
+<ResponseField name="getPluginManager()" type="@NotNull PluginManager">
+  Returns the `PluginManager`, which you use to register event listeners, fire custom events, manage permissions, and interact with other plugins.
+</ResponseField>
+
+```java title="Registering a listener"
+server.getPluginManager().registerEvents(myListener, myPlugin);
+```
+
+---
+
+## Scheduling
+
+<ResponseField name="getScheduler()" type="@NotNull BukkitScheduler">
+  Returns the `BukkitScheduler`, which lets you run tasks on the main server thread or on background threads, with optional delays and repeating periods. See the [Scheduler API reference](/api/scheduler) for full details.
+</ResponseField>
+
+---
+
+## Broadcasting
+
+<ResponseField name="broadcastMessage(String message)" type="int">
+  Sends a message to every player currently online. Equivalent to calling `broadcast(message, BROADCAST_CHANNEL_USERS)`. Returns the number of recipients.
+
+  <ParamField path="message" type="String" required>
+    The message text to send. Supports legacy `&` colour codes if your server processes them.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="broadcast(String message, String permission)" type="int">
+  Sends a message to all `Permissible` objects (players and the console) that hold the specified permission node. Returns the number of recipients.
+
+  <ParamField path="message" type="String" required>
+    The message to broadcast.
+  </ParamField>
+  <ParamField path="permission" type="String" required>
+    The permission node that recipients must hold. Use one of the built-in constants or a custom node.
+  </ParamField>
+</ResponseField>
+
+```java title="Targeted broadcast to operators"
+server.broadcast("Server restarting in 5 minutes.", Server.BROADCAST_CHANNEL_ADMINISTRATIVE);
+```
+
+---
+
+## Server Information
+
+These methods expose configuration and runtime metadata about the running server instance.
+
+<ResponseField name="getName()" type="@NotNull String">
+  Returns the name of this server implementation (for example, `"CraftBukkit"` or `"Paper"`).
+</ResponseField>
+
+<ResponseField name="getVersion()" type="@NotNull String">
+  Returns the version string of this server implementation, including the Minecraft version it targets.
+</ResponseField>
+
+<ResponseField name="getBukkitVersion()" type="@NotNull String">
+  Returns the Bukkit API version this server is running (for example, `"1.21.1-R0.1-SNAPSHOT"`).
+</ResponseField>
+
+<ResponseField name="getMotd()" type="String">
+  Returns the message of the day shown to clients in the server list.
+</ResponseField>
+
+<ResponseField name="getPort()" type="int">
+  Returns the TCP port the server is listening on.
+</ResponseField>
+
+<ResponseField name="getOnlineMode()" type="boolean">
+  Returns `true` if the server authenticates connecting players against Mojang's session servers (online mode), `false` for offline/cracked mode.
+</ResponseField>
+
+---
+
+## Utilities
+
+<ResponseField name="getItemFactory()" type="ItemFactory">
+  Returns the `ItemFactory`, used to create and manipulate `ItemMeta` objects for items in inventories.
+</ResponseField>
+
+<ResponseField name="getScoreboardManager()" type="@Nullable ScoreboardManager">
+  Returns the `ScoreboardManager` for creating and managing scoreboards, objectives, and teams. Returns `null` if called before the server fully starts.
+</ResponseField>
+
+<ResponseField name="createBossBar(String title, BarColor color, BarStyle style, BarFlag... flags)" type="BossBar">
+  Creates a new `BossBar` that you can add players to and display above their HUD.
+
+  <ParamField path="title" type="@Nullable String" required>
+    The text displayed on the boss bar. May be `null` for an empty title.
+  </ParamField>
+  <ParamField path="color" type="BarColor" required>
+    The colour of the boss bar (e.g. `BarColor.BLUE`).
+  </ParamField>
+  <ParamField path="style" type="BarStyle" required>
+    The segment style of the bar (e.g. `BarStyle.SOLID`).
+  </ParamField>
+  <ParamField path="flags" type="BarFlag..." required>
+    Zero or more `BarFlag` values (e.g. `BarFlag.PLAY_BOSS_MUSIC`).
+  </ParamField>
+</ResponseField>
+
+```java title="Creating and displaying a boss bar"
+BossBar bar = server.createBossBar("Welcome!", BarColor.GREEN, BarStyle.SOLID);
+bar.addPlayer(player);
+bar.setProgress(1.0);
+```
+
+---
+
+## Constants
+
+These two string constants are the built-in permission nodes for the `broadcast()` method.
+
+| Constant | Value | Description |
+|---|---|---|
+| `BROADCAST_CHANNEL_ADMINISTRATIVE` | `"bukkit.broadcast.admin"` | Targets players and the console with the `bukkit.broadcast.admin` permission. Used for operator-level announcements. |
+| `BROADCAST_CHANNEL_USERS` | `"bukkit.broadcast.user"` | Targets all standard online players. Used by `broadcastMessage()` internally. |
+
+<Tip>
+  Grant `bukkit.broadcast.admin` to trusted staff roles so they automatically receive administrative broadcasts, server warnings, and plugin alerts.
+</Tip>

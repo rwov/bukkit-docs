@@ -1,0 +1,143 @@
+---
+title: "Bukkit Plugin Lifecycle: Load, Enable, and Disable"
+sidebarTitle: "Plugin Lifecycle"
+description: "Understand when onLoad, onEnable, and onDisable are called in Bukkit, and what setup or teardown each hook is meant for."
+---
+
+Every Bukkit plugin travels through three distinct lifecycle stages from the moment the server starts to the moment it shuts down. Bukkit calls `onLoad()` before worlds exist, `onEnable()` once the server is ready for normal operation, and `onDisable()` when the plugin is being torn down. Understanding exactly when each hook fires — and what is safe to do inside it — keeps your plugin stable and avoids subtle bugs that are hard to reproduce.
+
+## The Three Lifecycle Hooks
+
+<Steps>
+  <Step title="onLoad()">
+    Bukkit calls `onLoad()` **before any worlds are loaded** and before any other plugin's `onEnable()` runs. At this point the server is not yet fully initialised, so you cannot rely on world data, online players, or most Bukkit API calls.
+
+    Use `onLoad()` for:
+    - Reading or writing raw configuration files that other plugins may depend on at load time
+    - Registering custom chunk generators (`getDefaultWorldGenerator`) or biome providers
+    - Any one-time initialisation that must complete before worlds are created
+  </Step>
+
+  <Step title="onEnable()">
+    Bukkit calls `onEnable()` after the server finishes starting (or after `/reload`). Worlds are loaded, the scheduler is running, and the full API is available. This is the hook you will use most often.
+
+    Use `onEnable()` for:
+    - Registering event listeners with `PluginManager`
+    - Registering command executors and tab completers
+    - Loading configuration and persistent data
+    - Starting repeating tasks or scheduled work
+    - Registering custom permissions programmatically
+  </Step>
+
+  <Step title="onDisable()">
+    Bukkit calls `onDisable()` when the server shuts down or the plugin is disabled (e.g., via `/reload`). Event listeners are automatically unregistered, but any other resources you own must be cleaned up manually.
+
+    Use `onDisable()` for:
+    - Saving in-memory data to disk
+    - Cancelling active `BukkitTask` instances
+    - Closing database connections or network sockets
+    - Flushing caches
+  </Step>
+</Steps>
+
+## Hook Summary
+
+| Hook | When it fires | Worlds available? | Safe to register events? |
+|---|---|---|---|
+| `onLoad()` | Before worlds are created | ❌ No | ❌ No |
+| `onEnable()` | Server is fully started | ✅ Yes | ✅ Yes |
+| `onDisable()` | Server shutdown or `/reload` | ✅ Yes (read-only) | ❌ No |
+
+## Code Example
+
+The following snippet shows all three hooks inside a minimal `JavaPlugin` subclass:
+
+```java MyPlugin.java
+package com.example.myplugin;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class MyPlugin extends JavaPlugin {
+
+    @Override
+    public void onLoad() {
+        // Runs before worlds are loaded.
+        // Safe for: custom generators, early config reads.
+        getLogger().info("MyPlugin is loading...");
+    }
+
+    @Override
+    public void onEnable() {
+        // Runs when the server is ready.
+        // Safe for: registering events, commands, tasks, and data.
+        saveDefaultConfig();
+        getServer().getPluginManager().registerEvents(new MyListener(this), this);
+        getCommand("mycommand").setExecutor(new MyCommandExecutor(this));
+        getLogger().info("MyPlugin has been enabled.");
+    }
+
+    @Override
+    public void onDisable() {
+        // Runs on shutdown or /reload.
+        // Safe for: saving data and releasing resources.
+        saveConfig();
+        getLogger().info("MyPlugin has been disabled.");
+    }
+}
+```
+
+## Plugin Load Order: STARTUP vs POSTWORLD
+
+Bukkit gives you control over *when* during the startup sequence your plugin's `onLoad()` is called via the `load:` key in `plugin.yml`. The `PluginLoadOrder` enum has two values:
+
+| Value | Behaviour |
+|---|---|
+| `POSTWORLD` | **(Default)** Your plugin loads after the first world is created. Most plugins should use this value. |
+| `STARTUP` | Your plugin loads at the very start, before any world exists. Use this only if you need to inject a custom `ChunkGenerator` or `BiomeProvider`. |
+
+```yaml plugin.yml
+name: MyPlugin
+version: 1.0.0
+main: com.example.myplugin.MyPlugin
+api-version: 1.20
+
+# Remove this line or set it to POSTWORLD unless you need early loading:
+load: STARTUP
+```
+
+<Note>
+  Dependency ordering (`depend:`, `softdepend:`, `loadbefore:`) is evaluated *per load phase*. If your plugin loads at `STARTUP` but a dependency loads at `POSTWORLD`, Bukkit cannot guarantee the dependency is available when your plugin loads.
+</Note>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="✅ Do in onEnable" icon="check">
+    - Register event listeners
+    - Set command executors and tab completers
+    - Call `saveDefaultConfig()` and read config values
+    - Start repeating tasks via `BukkitScheduler`
+    - Register programmatic `Permission` objects
+  </Card>
+  <Card title="❌ Don't in onEnable" icon="xmark">
+    - Block the main thread with heavy I/O or network calls — use the async scheduler instead
+    - Assume other plugins are fully initialised (use `Bukkit.getServer().getPluginManager().getPlugin(...)` and null-check)
+  </Card>
+  <Card title="✅ Do in onLoad" icon="check">
+    - Return a `ChunkGenerator` from `getDefaultWorldGenerator`
+    - Prepare resources that world creation depends on
+  </Card>
+  <Card title="❌ Don't in onLoad" icon="xmark">
+    - Register event listeners (worlds don't exist yet)
+    - Call `getServer().getOnlinePlayers()` or world API
+    - Start the scheduler
+  </Card>
+</CardGroup>
+
+<Tip>
+  Save all persistent data in `onDisable()`. Bukkit does **not** save your in-memory state automatically — if you skip this, players will lose progress on every restart.
+</Tip>
+
+<Warning>
+  Never call Bukkit API methods from a **static initializer** in your `JavaPlugin` class. The plugin is not yet initialised when static blocks run, and calling `JavaPlugin.getPlugin(MyPlugin.class)` from a static context will throw an `IllegalStateException`. Perform all setup inside `onLoad()` or `onEnable()` instead.
+</Warning>

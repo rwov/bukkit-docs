@@ -1,0 +1,266 @@
+---
+title: "Command API Reference: CommandExecutor and TabCompleter"
+sidebarTitle: "Commands API"
+description: "Reference for Bukkit command handling: CommandExecutor, TabCompleter, Command class properties, and PluginCommand registration."
+---
+
+Bukkit's command system gives your plugin a clean, plugin.yml-driven way to handle slash commands typed by players and the server console. You declare your commands in `plugin.yml`, implement `CommandExecutor` to handle execution, optionally implement `TabCompleter` for tab-completion suggestions, and wire everything together through a `PluginCommand` retrieved from the server. This reference covers every interface, class, and helper you need.
+
+---
+
+## `CommandExecutor` Interface
+
+`org.bukkit.command.CommandExecutor` contains a single method that Bukkit calls when a player or the console runs your command.
+
+<ResponseField name="onCommand(CommandSender sender, Command command, String label, String[] args)" type="boolean">
+  Called whenever a registered command is executed. You must return a boolean to signal whether the command was handled successfully.
+
+  <ParamField path="sender" type="@NotNull CommandSender" required>
+    The entity or process that issued the command. This may be a `Player`, a `ConsoleCommandSender`, or a `CommandMinecart`. Always check the type before calling player-specific methods.
+  </ParamField>
+  <ParamField path="command" type="@NotNull Command" required>
+    The `Command` object being executed. Use this to access the command's name, permission, and usage string.
+  </ParamField>
+  <ParamField path="label" type="@NotNull String" required>
+    The exact alias the sender typed. For example, if `/tp` is an alias for `/teleport`, `label` will be `"tp"`.
+  </ParamField>
+  <ParamField path="args" type="@NotNull String[]" required>
+    An array of arguments split on spaces. This array may be empty but is never `null`. `args[0]` is the first word after the command name.
+  </ParamField>
+</ResponseField>
+
+**Return value semantics:**
+
+- Return `true` — the command was handled. No usage message is sent.
+- Return `false` — the command was not handled correctly. Bukkit automatically sends the usage string defined in `plugin.yml` to the sender.
+
+```java title="Basic CommandExecutor implementation"
+public class HealCommand implements CommandExecutor {
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender,
+                             @NotNull Command command,
+                             @NotNull String label,
+                             @NotNull String[] args) {
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can use this command.");
+            return true; // Handled — no usage message needed
+        }
+
+        player.setHealth(player.getMaxHealth());
+        player.sendMessage("You have been fully healed!");
+        return true;
+    }
+}
+```
+
+---
+
+## `TabCompleter` Interface
+
+`org.bukkit.command.TabCompleter` adds tab-completion support to your command. Implement this interface (on its own class or combined with `CommandExecutor`) to suggest completions as the player types.
+
+<ResponseField name="onTabComplete(CommandSender sender, Command command, String label, String[] args)" type="@Nullable List<String>">
+  Called whenever a player presses Tab while typing your command. You return the list of valid completions for the current argument.
+
+  <ParamField path="sender" type="@NotNull CommandSender" required>
+    The entity requesting completions.
+  </ParamField>
+  <ParamField path="command" type="@NotNull Command" required>
+    The command being tab-completed.
+  </ParamField>
+  <ParamField path="label" type="@NotNull String" required>
+    The alias being used.
+  </ParamField>
+  <ParamField path="args" type="@NotNull String[]" required>
+    All arguments typed so far, including the partial last argument to be completed.
+  </ParamField>
+</ResponseField>
+
+**Return value semantics:**
+
+- Return a `List<String>` — Bukkit filters this list by the current partial argument and displays matching entries.
+- Return an empty list — no suggestions are shown.
+- Return `null` — Bukkit falls back to the default command executor's tab completion (online player names).
+
+```java title="TabCompleter returning subcommand suggestions"
+public class MyTabCompleter implements TabCompleter {
+
+    private static final List<String> SUBCOMMANDS =
+        List.of("reload", "list", "add", "remove");
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
+                                                @NotNull Command command,
+                                                @NotNull String label,
+                                                @NotNull String[] args) {
+        if (args.length == 1) {
+            return StringUtil.copyPartialMatches(
+                args[0], SUBCOMMANDS, new ArrayList<>()
+            );
+        }
+        return List.of(); // No suggestions for deeper arguments
+    }
+}
+```
+
+<Note>
+  Bukkit does not automatically filter your returned list by the partial argument — you must do that yourself. Use `StringUtil.copyPartialMatches()` to handle this efficiently (see [the helper section](#stringutil-copypartialmatches) below).
+</Note>
+
+---
+
+## The `Command` Class
+
+`org.bukkit.command.Command` is the abstract base class representing a registered command. You read its properties inside `onCommand()` and `onTabComplete()` to make decisions.
+
+<ResponseField name="getName()" type="@NotNull String">
+  Returns the canonical name of the command as declared in `plugin.yml` (e.g. `"teleport"`).
+</ResponseField>
+
+<ResponseField name="getLabel()" type="@NotNull String">
+  Returns the label currently assigned to this command. After registration, this reflects the command map's registered name, which may differ if there was a namespace conflict.
+</ResponseField>
+
+<ResponseField name="getAliases()" type="@NotNull List<String>">
+  Returns all configured aliases for this command. These are additional names players can use to invoke the command.
+</ResponseField>
+
+<ResponseField name="getDescription()" type="@NotNull String">
+  Returns the description string shown in `/help` listings, sourced from the `description` field in `plugin.yml`.
+</ResponseField>
+
+<ResponseField name="getUsage()" type="@NotNull String">
+  Returns the usage hint shown to the sender when `onCommand()` returns `false`. Typically formatted as `/<command> [args]`.
+</ResponseField>
+
+<ResponseField name="getPermission()" type="@Nullable String">
+  Returns the permission node required to execute this command, or `null` if no permission is required. This is the node from `plugin.yml`'s `permission` field.
+</ResponseField>
+
+<ResponseField name="testPermission(CommandSender target)" type="boolean">
+  Returns `true` if `target` has the permission to use this command. If the sender lacks the permission, this method also sends them a denial message automatically. Use `testPermissionSilent()` if you want to check without sending a message.
+
+  <ParamField path="target" type="@NotNull CommandSender" required>
+    The sender whose permissions you are testing.
+  </ParamField>
+</ResponseField>
+
+---
+
+## `CommandSender`
+
+`CommandSender` is the common interface for anything that can run a command: players, the console, and command-block minecarts.
+
+<ResponseField name="sendMessage(String message)" type="void">
+  Sends a text message to this sender. For players this appears in chat; for the console it is written to stdout.
+</ResponseField>
+
+<ResponseField name="hasPermission(String name)" type="boolean">
+  Returns `true` if this sender has the given permission node, either through their group or an explicit grant. The console always returns `true` for any permission check.
+</ResponseField>
+
+<ResponseField name="getName()" type="@NotNull String">
+  Returns a display name for this sender: the player's username, `"CONSOLE"` for the server console, or the entity name for command minecarts.
+</ResponseField>
+
+The three concrete `CommandSender` subtypes you will encounter most often:
+
+| Subtype | Description |
+|---|---|
+| `Player` | An online human player. Cast to `Player` when your command requires an in-game context (e.g. getting location or sending title screens). |
+| `ConsoleCommandSender` | The server console. Useful for admin-only commands that should also be automatable via scripts or RCON. |
+| `CommandMinecart` | A command-block minecart entity. Extends `Entity`, so it has a `Location` you can use for positional commands. |
+
+```java title="Type-checking the sender"
+if (sender instanceof Player player) {
+    player.sendTitle("Hello!", player.getDisplayName(), 10, 70, 20);
+} else {
+    sender.sendMessage("This command can only be run by a player.");
+}
+```
+
+---
+
+## `PluginCommand`
+
+`org.bukkit.command.PluginCommand` extends `Command` and represents a command that belongs to your plugin specifically. You retrieve it via `getCommand()` inside your `JavaPlugin` and then attach an executor and tab completer.
+
+<ResponseField name="setExecutor(CommandExecutor executor)" type="void">
+  Registers the `CommandExecutor` that handles this command. If you pass `null`, the owning plugin instance itself is used (meaning your `JavaPlugin` must implement `CommandExecutor`).
+
+  <ParamField path="executor" type="@Nullable CommandExecutor" required>
+    The executor to handle command execution.
+  </ParamField>
+</ResponseField>
+
+<ResponseField name="setTabCompleter(TabCompleter completer)" type="void">
+  Registers the `TabCompleter` for this command. If not set and the command's executor implements `TabCompleter`, the executor is used automatically.
+
+  <ParamField path="completer" type="@Nullable TabCompleter" required>
+    The tab completer, or `null` to fall back to the executor.
+  </ParamField>
+</ResponseField>
+
+```java title="Wiring up a command in onEnable()"
+@Override
+public void onEnable() {
+    HealCommand healExecutor = new HealCommand();
+
+    PluginCommand heal = getCommand("heal");
+    if (heal != null) {
+        heal.setExecutor(healExecutor);
+        heal.setTabCompleter(healExecutor); // Combined executor + completer
+    }
+}
+```
+
+<Note>
+  `getCommand("heal")` returns `null` if `"heal"` is not declared in your `plugin.yml`. Always null-check the result before calling `setExecutor()`.
+</Note>
+
+---
+
+## `StringUtil.copyPartialMatches()`
+
+`org.bukkit.util.StringUtil` provides a static helper method that makes tab completion easy: it filters a collection of possible completions down to those that start with the player's current partial input, in a case-insensitive way.
+
+```java
+public static <T extends Collection<? super String>> T copyPartialMatches(
+    @NotNull final String token,
+    @NotNull final Iterable<String> originals,
+    @NotNull final T collection
+)
+```
+
+<ParamField path="token" type="String" required>
+  The partial string the player has typed so far (i.e. `args[args.length - 1]`).
+</ParamField>
+<ParamField path="originals" type="Iterable<String>" required>
+  The full set of possible completions to filter.
+</ParamField>
+<ParamField path="collection" type="T extends Collection<? super String>" required>
+  The mutable collection to copy matching strings into. The same collection is returned for easy chaining.
+</ParamField>
+
+```java title="Tab-completing a list of worlds"
+@Override
+public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
+                                            @NotNull Command command,
+                                            @NotNull String label,
+                                            @NotNull String[] args) {
+    if (args.length == 1) {
+        List<String> worldNames = Bukkit.getWorlds().stream()
+            .map(World::getName)
+            .collect(Collectors.toList());
+
+        return StringUtil.copyPartialMatches(args[0], worldNames, new ArrayList<>());
+    }
+    return List.of();
+}
+```
+
+<Tip>
+  Always sort your completions list alphabetically before returning it. Bukkit does not sort for you, and players expect tab suggestions to appear in alphabetical order. Add `Collections.sort(results)` before your return statement.
+</Tip>

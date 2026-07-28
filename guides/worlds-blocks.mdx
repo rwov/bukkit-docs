@@ -1,0 +1,294 @@
+---
+title: "Worlds and Blocks: The Bukkit World and Block API Guide"
+sidebarTitle: "Worlds & Blocks"
+description: "Load worlds, query and set blocks, use BlockData, manage chunks, and build custom world generators using the Bukkit World and Block API."
+---
+
+Minecraft's `World` interface is one of the largest and most powerful APIs in Bukkit. It gives you access to every block coordinate, chunk, entity, environmental setting, and particle effect within a dimension. The companion `Block` interface represents a single, live block at a specific location and lets you read or change its material and `BlockData` state. Together these two interfaces let you build anything from block replacement utilities to full procedural level generators.
+
+## Getting a World Reference
+
+The `Bukkit` server class exposes static helpers to retrieve world instances by name or UUID.
+
+```java WorldLookup.java
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import java.util.List;
+
+public class WorldLookup {
+
+    // Get a world by its folder name (configured in bukkit.yml or plugins)
+    public World byName() {
+        World world = Bukkit.getWorld("world");    // main overworld
+        World nether = Bukkit.getWorld("world_nether");
+        World end    = Bukkit.getWorld("world_the_end");
+        return world;
+    }
+
+    // Iterate every loaded world on the server
+    public void listAll() {
+        List<World> worlds = Bukkit.getWorlds();
+        for (World w : worlds) {
+            Bukkit.getLogger().info("World: " + w.getName()
+                + "  Environment: " + w.getEnvironment());
+        }
+    }
+}
+```
+
+<Note>
+`Bukkit.getWorld(String)` returns `null` if no world with that name is currently loaded. Always null-check the result before using it, especially if your plugin supports multi-world setups.
+</Note>
+
+## Working with Blocks
+
+`world.getBlockAt(x, y, z)` returns the live `Block` object at those coordinates. You can read its material type, replace it with a new type, or inspect its full `BlockData` state.
+
+```java BlockExample.java
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+
+public class BlockExample {
+
+    public void inspectBlock(World world) {
+        // Retrieve a block by integer coordinates
+        Block block = world.getBlockAt(100, 64, 200);
+
+        // Read its current material
+        Material type = block.getType();
+        Bukkit.getLogger().info("Block type: " + type.name());
+
+        // Replace with a new material
+        block.setType(Material.STONE);
+    }
+
+    public void useBlockData(World world) {
+        Block slab = world.getBlockAt(50, 65, 50);
+
+        // getBlockData returns the rich, type-specific state object
+        BlockData data = slab.getBlockData();
+        Bukkit.getLogger().info("BlockData: " + data.getAsString());
+    }
+
+    public void iterateRadius(World world, int centerX, int centerY, int centerZ, int radius) {
+        // Replace every block in a cube radius with glass
+        for (int x = centerX - radius; x <= centerX + radius; x++) {
+            for (int y = centerY - radius; y <= centerY + radius; y++) {
+                for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+                    world.getBlockAt(x, y, z).setType(Material.GLASS);
+                }
+            }
+        }
+    }
+}
+```
+
+<Warning>
+Setting blocks one at a time in a large loop is expensive because each call triggers lighting and physics updates. For bulk operations consider batching changes or using asynchronous chunk loading patterns where your server software supports it.
+</Warning>
+
+### Using BlockData
+
+`BlockData` carries all the extra state for a block beyond its material type — things like slab position (top/bottom), stair shape, or furnace facing. Cast the result of `getBlockData()` to the appropriate sub-interface to access those properties.
+
+```java BlockDataExample.java
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Bisected;
+
+public class BlockDataExample {
+
+    public void flipSlab(World world) {
+        Block slab = world.getBlockAt(10, 64, 10);
+
+        if (slab.getBlockData() instanceof Bisected bisected) {
+            bisected.setHalf(Bisected.Half.TOP);
+            // Write the modified data back to the world
+            slab.setBlockData(bisected);
+        }
+    }
+
+    // Create BlockData from a string and apply it
+    public void applyFromString(World world) {
+        BlockData data = Bukkit.createBlockData("minecraft:oak_stairs[facing=west,half=bottom]");
+        world.getBlockAt(20, 64, 20).setBlockData(data);
+    }
+}
+```
+
+## Locations
+
+A `Location` ties a set of (x, y, z) coordinates — plus optional yaw/pitch — to a specific `World`. You construct one directly or derive it from an existing block or entity.
+
+```java LocationExample.java
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+
+public class LocationExample {
+
+    public Location createLocation(World world) {
+        // Location(World, x, y, z)
+        return new Location(world, 128.5, 70, -64.5);
+    }
+
+    public Location createWithRotation(World world) {
+        // Location(World, x, y, z, yaw, pitch)
+        return new Location(world, 0.5, 64, 0.5, 90f, 0f);
+    }
+
+    public Location fromBlock(World world) {
+        Block block = world.getBlockAt(50, 64, 50);
+        // Returns the Location of the block's lowest corner
+        return block.getLocation();
+    }
+}
+```
+
+## Spawning Entities
+
+You can spawn any `EntityType` into a world at a given `Location` with `world.spawnEntity()`.
+
+```java SpawnExample.java
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Zombie;
+
+public class SpawnExample {
+
+    public void spawnZombie(World world, Location location) {
+        // Basic spawn — returns the spawned Entity
+        Zombie zombie = (Zombie) world.spawnEntity(location, EntityType.ZOMBIE);
+        zombie.setCustomName("Cave Guardian");
+        zombie.setCustomNameVisible(true);
+    }
+}
+```
+
+## World Environment
+
+The `Environment` enum identifies the dimension type of a world. You can also control the time of day and weather.
+
+<CodeGroup>
+
+```java EnvironmentExample.java
+import org.bukkit.World;
+
+public class EnvironmentExample {
+
+    public void printEnvironment(World world) {
+        switch (world.getEnvironment()) {
+            case NORMAL  -> System.out.println("Overworld");
+            case NETHER  -> System.out.println("Nether");
+            case THE_END -> System.out.println("The End");
+        }
+    }
+}
+```
+
+```java WeatherTimeExample.java
+import org.bukkit.World;
+
+public class WeatherTimeExample {
+
+    public void setNoon(World world) {
+        world.setTime(6000L);     // ticks: 0=dawn, 6000=noon, 18000=midnight
+    }
+
+    public void clearWeather(World world) {
+        world.setStorm(false);
+        world.setThundering(false);
+    }
+
+    public void startStorm(World world) {
+        world.setStorm(true);
+        world.setWeatherDuration(6000);   // duration in ticks
+    }
+}
+```
+
+</CodeGroup>
+
+## Spawning Particle Effects
+
+`world.spawnParticle()` lets you display any `Particle` effect at a precise location.
+
+```java ParticleExample.java
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
+
+public class ParticleExample {
+
+    public void burstAtLocation(World world, Location loc) {
+        // spawnParticle(type, location, count)
+        world.spawnParticle(Particle.EXPLOSION, loc, 1);
+    }
+
+    public void heartRing(World world, Location center) {
+        // spawnParticle(type, location, count, offsetX, offsetY, offsetZ, speed)
+        world.spawnParticle(
+            Particle.HEART,
+            center,
+            10,    // count
+            0.5,   // offsetX
+            0.5,   // offsetY
+            0.5,   // offsetZ
+            0.0    // extra/speed
+        );
+    }
+}
+```
+
+## Custom World Generators
+
+For procedurally generated worlds, extend `ChunkGenerator` and override `generateSurface()` to fill chunk sections with custom materials. Register your generator by returning it from `JavaPlugin.getDefaultWorldGenerator()`.
+
+```java FlatWorldGenerator.java
+import org.bukkit.Material;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.ChunkGenerator.ChunkData;
+import org.bukkit.generator.WorldInfo;
+import java.util.Random;
+
+public class FlatWorldGenerator extends ChunkGenerator {
+
+    @Override
+    public void generateSurface(WorldInfo worldInfo, Random random, int chunkX, int chunkZ, ChunkData chunkData) {
+        // Fill layers: bedrock at 0, stone 1–59, dirt at 60, grass at 61
+        chunkData.setRegion(0, 0, 0, 16, 1, 16, Material.BEDROCK);
+        chunkData.setRegion(0, 1, 0, 16, 60, 16, Material.STONE);
+        chunkData.setRegion(0, 60, 0, 16, 61, 16, Material.DIRT);
+        chunkData.setRegion(0, 61, 0, 16, 62, 16, Material.GRASS_BLOCK);
+    }
+}
+```
+
+```java MyPlugin.java
+import org.bukkit.World;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class MyPlugin extends JavaPlugin {
+
+    @Override
+    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        return new FlatWorldGenerator();
+    }
+}
+```
+
+<Note>
+Register your custom generator in `bukkit.yml` under the `worlds` section so Bukkit uses it when loading that world:
+```yaml
+worlds:
+  my_flat_world:
+    generator: MyPlugin
+```
+</Note>

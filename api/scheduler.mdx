@@ -1,0 +1,243 @@
+---
+title: "BukkitScheduler: Sync, Async Tasks, Timers and Cancellation"
+sidebarTitle: "Scheduler API"
+description: "Complete reference for BukkitScheduler: run sync and async tasks, set repeating timers, use BukkitRunnable, and cancel tasks safely."
+---
+
+The `BukkitScheduler` manages all time-based and background work in Bukkit plugins. Everything runs in terms of **ticks**: the server processes 20 ticks per second under normal load, so 1 second equals 20 ticks, 1 minute equals 1,200 ticks, and so on. You can schedule a task to run once on the next tick, after a delay, or on a fixed repeating interval — either on the main server thread (synchronous) or on a background thread (asynchronous). Access the scheduler via `Bukkit.getScheduler()` or `getServer().getScheduler()`.
+
+<Note>
+  Under heavy server load the tick rate can drop below 20 per second. Tick-based delays are therefore approximate, not wall-clock precise. If your plugin needs real-time accuracy, record `System.currentTimeMillis()` inside the task and adjust accordingly.
+</Note>
+
+---
+
+## `BukkitScheduler` Method Reference
+
+The table below summarises the primary scheduling methods. Each returns a `BukkitTask` you can use to cancel the task later.
+
+| Method | Thread | Timing | Description |
+|---|---|---|---|
+| `runTask(Plugin, Runnable)` | Main | Next tick | Queues a one-shot task to run on the very next server tick. |
+| `runTaskLater(Plugin, Runnable, long delay)` | Main | After `delay` ticks | Queues a one-shot task to run after the specified number of ticks. |
+| `runTaskTimer(Plugin, Runnable, long delay, long period)` | Main | Repeating | Runs a task repeatedly: waits `delay` ticks, then fires every `period` ticks until cancelled. |
+| `runTaskAsynchronously(Plugin, Runnable)` | Background | Immediately | Runs a task on a background thread with no initial delay. Must not call Bukkit API. |
+| `runTaskLaterAsynchronously(Plugin, Runnable, long delay)` | Background | After `delay` ticks | Runs a background task after the specified delay. Must not call Bukkit API. |
+| `runTaskTimerAsynchronously(Plugin, Runnable, long delay, long period)` | Background | Repeating | Runs a background task repeatedly. Must not call Bukkit API. |
+| `cancelTask(int taskId)` | Any | — | Removes the task with the given ID from the scheduler. |
+| `cancelTasks(Plugin plugin)` | Any | — | Removes all tasks registered by the given plugin. |
+| `isCurrentlyRunning(int taskId)` | Any | — | Returns `true` if a background worker for this task ID is currently alive. |
+
+---
+
+### Synchronous Tasks
+
+Synchronous tasks run on the main server thread. They can safely call any Bukkit API method but will block the server tick while they execute, so keep them short.
+
+<ResponseField name="runTask(Plugin plugin, Runnable task)" type="@NotNull BukkitTask">
+  Returns a task that runs on the next server tick.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute.</ParamField>
+</ResponseField>
+
+<ResponseField name="runTaskLater(Plugin plugin, Runnable task, long delay)" type="@NotNull BukkitTask">
+  Returns a task that runs after `delay` ticks on the main thread.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute.</ParamField>
+  <ParamField path="delay" type="long" required>Ticks to wait before executing. 20 ticks = 1 second.</ParamField>
+</ResponseField>
+
+<ResponseField name="runTaskTimer(Plugin plugin, Runnable task, long delay, long period)" type="@NotNull BukkitTask">
+  Returns a repeating task that runs on the main thread. Call `cancel()` on the returned `BukkitTask` to stop it.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute on each repetition.</ParamField>
+  <ParamField path="delay" type="long" required>Ticks to wait before the first execution.</ParamField>
+  <ParamField path="period" type="long" required>Ticks between subsequent executions.</ParamField>
+</ResponseField>
+
+```java title="Countdown timer running every second"
+final int[] countdown = {10};
+
+BukkitTask timer = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+    if (countdown[0] <= 0) {
+        Bukkit.broadcastMessage("The event has started!");
+        // Cancel in the next tick to avoid modifying the task mid-execution
+        Bukkit.getScheduler().cancelTask(/* stored task id */0);
+        return;
+    }
+    Bukkit.broadcastMessage("Event starts in " + countdown[0] + " seconds...");
+    countdown[0]--;
+}, 0L, 20L); // Start immediately, fire every 20 ticks (1 second)
+```
+
+---
+
+### Asynchronous Tasks
+
+Asynchronous tasks run on a background thread managed by the scheduler. Use them for I/O-bound operations such as database queries, file reads, or HTTP requests — work that would otherwise stall the server tick.
+
+<ResponseField name="runTaskAsynchronously(Plugin plugin, Runnable task)" type="@NotNull BukkitTask">
+  Queues a task to run immediately on a background thread.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute off the main thread.</ParamField>
+</ResponseField>
+
+<ResponseField name="runTaskLaterAsynchronously(Plugin plugin, Runnable task, long delay)" type="@NotNull BukkitTask">
+  Queues a background task to run after the specified number of ticks.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute.</ParamField>
+  <ParamField path="delay" type="long" required>Ticks to wait before execution begins.</ParamField>
+</ResponseField>
+
+<ResponseField name="runTaskTimerAsynchronously(Plugin plugin, Runnable task, long delay, long period)" type="@NotNull BukkitTask">
+  Queues a repeating background task.
+
+  <ParamField path="plugin" type="Plugin" required>Your plugin instance.</ParamField>
+  <ParamField path="task" type="Runnable" required>The code to execute on each repetition.</ParamField>
+  <ParamField path="delay" type="long" required>Ticks to wait before the first execution.</ParamField>
+  <ParamField path="period" type="long" required>Ticks between subsequent executions.</ParamField>
+</ResponseField>
+
+<Warning>
+  **Asynchronous tasks must never call Bukkit API methods.** The Bukkit API is not thread-safe. Calling methods such as `player.teleport()`, `world.spawnEntity()`, or `block.setType()` from a background thread can cause data corruption, crashes, or subtle duplication bugs. If you need to update the game world after completing async work, schedule a sync task from inside your async task using `runTask()`.
+</Warning>
+
+```java title="Async database query followed by sync world update"
+Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+    // Safe: reading from a database on a background thread
+    PlayerData data = database.loadPlayerData(player.getUniqueId());
+
+    // Hand off to the main thread to update the game world
+    Bukkit.getScheduler().runTask(plugin, () -> {
+        player.sendMessage("Your rank is: " + data.getRank());
+        // Safe: now on the main thread
+    });
+});
+```
+
+---
+
+### Cancellation
+
+<ResponseField name="cancelTask(int taskId)" type="void">
+  Removes the task with the given ID from the scheduler. If the task is currently executing, it will finish its current run and not be queued again.
+
+  <ParamField path="taskId" type="int" required>The ID returned by any `runTask*` method or retrieved from a `BukkitTask`.</ParamField>
+</ResponseField>
+
+<ResponseField name="cancelTasks(Plugin plugin)" type="void">
+  Cancels all pending and repeating tasks registered by the given plugin. Bukkit calls this automatically when your plugin is disabled, but you can call it earlier to clean up proactively.
+
+  <ParamField path="plugin" type="Plugin" required>The plugin whose tasks should be cancelled.</ParamField>
+</ResponseField>
+
+<ResponseField name="isCurrentlyRunning(int taskId)" type="boolean">
+  Returns `true` if an active background worker thread for the given task is currently alive. Useful for guarding against re-entry in long-running async tasks.
+
+  <ParamField path="taskId" type="int" required>The ID of the task to check.</ParamField>
+</ResponseField>
+
+---
+
+## `BukkitTask`
+
+Every `runTask*` method returns a `BukkitTask` object. Hold onto this reference when you need to cancel or inspect the task later.
+
+<ResponseField name="getTaskId()" type="int">
+  Returns the unique integer ID assigned to this task by the scheduler. You can pass this to `cancelTask()`.
+</ResponseField>
+
+<ResponseField name="isCancelled()" type="boolean">
+  Returns `true` if this task has been cancelled and will not execute again.
+</ResponseField>
+
+<ResponseField name="cancel()" type="void">
+  Cancels this task. Equivalent to calling `Bukkit.getScheduler().cancelTask(getTaskId())`.
+</ResponseField>
+
+<ResponseField name="isSync()" type="boolean">
+  Returns `true` if this task runs on the main server thread, `false` if it runs asynchronously.
+</ResponseField>
+
+```java title="Storing and cancelling a task"
+BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 0L, 10L);
+
+// Later, when you want to stop it:
+if (!task.isCancelled()) {
+    task.cancel();
+}
+```
+
+---
+
+## `BukkitRunnable`
+
+`org.bukkit.scheduler.BukkitRunnable` is an abstract convenience class that combines `Runnable` with built-in task management. You extend it, implement `run()`, and then call one of its scheduling methods directly — no need to pass your `Runnable` to the scheduler separately.
+
+**Key methods on `BukkitRunnable`:**
+
+<ResponseField name="runTask(Plugin plugin)" type="@NotNull BukkitTask">
+  Schedules this runnable to execute on the next server tick. Throws `IllegalStateException` if already scheduled.
+</ResponseField>
+
+<ResponseField name="runTaskLater(Plugin plugin, long delay)" type="@NotNull BukkitTask">
+  Schedules this runnable to execute after `delay` ticks on the main thread.
+</ResponseField>
+
+<ResponseField name="runTaskTimer(Plugin plugin, long delay, long period)" type="@NotNull BukkitTask">
+  Schedules this runnable as a repeating task on the main thread.
+</ResponseField>
+
+<ResponseField name="runTaskAsynchronously(Plugin plugin)" type="@NotNull BukkitTask">
+  Schedules this runnable to execute on a background thread immediately.
+</ResponseField>
+
+<ResponseField name="runTaskLaterAsynchronously(Plugin plugin, long delay)" type="@NotNull BukkitTask">
+  Schedules this runnable to execute on a background thread after `delay` ticks.
+</ResponseField>
+
+<ResponseField name="runTaskTimerAsynchronously(Plugin plugin, long delay, long period)" type="@NotNull BukkitTask">
+  Schedules this runnable as a repeating background task.
+</ResponseField>
+
+<ResponseField name="cancel()" type="void">
+  Cancels this runnable. Throws `IllegalStateException` if it has not been scheduled yet.
+</ResponseField>
+
+<ResponseField name="getTaskId()" type="int">
+  Returns the task ID assigned by the scheduler. Throws `IllegalStateException` if not yet scheduled.
+</ResponseField>
+
+<ResponseField name="isCancelled()" type="boolean">
+  Returns `true` if this runnable has been cancelled. Throws `IllegalStateException` if not yet scheduled.
+</ResponseField>
+
+```java title="Self-cancelling BukkitRunnable"
+new BukkitRunnable() {
+    int ticks = 0;
+
+    @Override
+    public void run() {
+        ticks++;
+        player.sendMessage("Tick " + ticks);
+
+        if (ticks >= 5) {
+            cancel(); // Stop after 5 executions
+            player.sendMessage("Timer finished.");
+        }
+    }
+}.runTaskTimer(plugin, 0L, 20L); // Run every second
+```
+
+<Tip>
+  Prefer `BukkitRunnable` over bare lambdas when you need to cancel the task from inside the running code itself. The `cancel()` method on `BukkitRunnable` lets the task remove itself cleanly without needing an external reference to the `BukkitTask`.
+</Tip>
+
+<Warning>
+  Each `BukkitRunnable` instance can only be scheduled once. If you call any `runTask*` method on an already-scheduled instance, it throws `IllegalStateException`. Create a new instance for each scheduling invocation.
+</Warning>

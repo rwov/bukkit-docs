@@ -1,0 +1,148 @@
+---
+title: "Task Scheduling in Bukkit: Sync, Async, and Repeating"
+sidebarTitle: "Scheduler"
+description: "Schedule delayed, repeating, and async tasks using BukkitScheduler and BukkitRunnable. Learn tick timing, cancellation, and thread-safe patterns."
+---
+
+Bukkit's scheduler lets you defer work to a later tick, run code on a fixed interval, or push expensive operations off the main server thread entirely. The server runs at 20 ticks per second, so a delay of `20L` ticks equals one second, `200L` equals ten seconds, and so on. You access the scheduler through `Bukkit.getScheduler()` (or `getServer().getScheduler()` inside your plugin class), and every scheduling method returns a `BukkitTask` whose ID you can use to cancel the work later.
+
+## Sync delayed task
+
+Use `runTaskLater(Plugin plugin, Runnable task, long delay)` to execute a block of code on the **main server thread** after a set number of ticks. This is safe to call any Bukkit API from.
+
+```java title="DelayedSyncExample.java"
+// Run on the main thread after 3 seconds (60 ticks)
+BukkitTask task = Bukkit.getScheduler().runTaskLater(this, () -> {
+    player.sendMessage("Three seconds have passed!");
+    player.getWorld().strikeLightning(player.getLocation());
+}, 60L);
+```
+
+The method returns a `BukkitTask`. Store it if you need to cancel before it fires; otherwise you can safely discard the return value.
+
+## Sync repeating task
+
+Use `runTaskTimer(Plugin plugin, Runnable task, long delay, long period)` to schedule a task that fires on the main thread repeatedly at a fixed interval. The `delay` controls how many ticks to wait before the first execution; `period` controls how many ticks to wait between subsequent executions.
+
+```java title="RepeatingTimerExample.java"
+// Wait 1 second, then broadcast a countdown every 2 seconds
+int[] count = {10};
+
+BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
+    Bukkit.broadcastMessage("Time remaining: " + count[0] + " seconds");
+    count[0]--;
+
+    if (count[0] < 0) {
+        Bukkit.broadcastMessage("Time's up!");
+        // Cancel is handled externally via the task reference — see below
+    }
+}, 20L, 40L);
+```
+
+<Note>
+  A `BukkitTask` returned by `runTaskTimer` keeps firing until you explicitly cancel it. Make sure your plugin cancels repeating tasks in `onDisable()` or you will leak them across reloads.
+</Note>
+
+## Async tasks
+
+Three async counterparts let you run code on a background thread managed by the scheduler:
+
+| Method | Behaviour |
+|---|---|
+| `runTaskAsynchronously(plugin, task)` | Run immediately on a background thread |
+| `runTaskLaterAsynchronously(plugin, task, delay)` | Run after `delay` ticks on a background thread |
+| `runTaskTimerAsynchronously(plugin, task, delay, period)` | Repeat every `period` ticks on a background thread |
+
+<Warning>
+  **Async tasks must never call Bukkit API methods.** The Bukkit API is not thread-safe. Calling methods like `player.sendMessage()`, `world.getBlockAt()`, or anything on a `Player`, `World`, or `Entity` from an async task will cause race conditions, data corruption, and server crashes. Limit async tasks strictly to thread-safe I/O: reading and writing files, HTTP requests, and database queries. When you have a result ready, schedule a sync task to hand it back to the main thread.
+</Warning>
+
+### Async database fetch with sync result handoff
+
+The correct pattern for async work is to do the I/O off-thread and then call `runTask()` to process the result on the main thread:
+
+```java title="AsyncDatabaseFetch.java"
+Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+    // Safe: database I/O happens on a background thread
+    String data = database.queryPlayerData(player.getUniqueId());
+
+    // Hand the result back to the main thread before touching any Bukkit API
+    Bukkit.getScheduler().runTask(plugin, () -> {
+        player.sendMessage("Your data: " + data);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 1));
+    });
+});
+```
+
+## Using BukkitRunnable
+
+`BukkitRunnable` is an abstract class you can extend instead of passing a raw `Runnable`. It gives you a cleaner API: you call `runTask()`, `runTaskLater()`, `runTaskTimer()`, and their async variants directly on the object, and you can call `cancel()` on `this` from inside `run()`.
+
+```java title="CountdownRunnable.java"
+public class CountdownRunnable extends BukkitRunnable {
+    private final JavaPlugin plugin;
+    private int ticksLeft;
+
+    public CountdownRunnable(JavaPlugin plugin, int seconds) {
+        this.plugin = plugin;
+        this.ticksLeft = seconds;
+    }
+
+    @Override
+    public void run() {
+        if (ticksLeft <= 0) {
+            Bukkit.broadcastMessage("Countdown complete!");
+            this.cancel(); // Cancel this repeating task from inside run()
+            return;
+        }
+        Bukkit.broadcastMessage(ticksLeft + "...");
+        ticksLeft--;
+    }
+}
+```
+
+Schedule it from your plugin with a fluent one-liner:
+
+```java title="MyPlugin.java"
+// Start after 0 ticks, repeat every 20 ticks (1 second)
+new CountdownRunnable(this, 10).runTaskTimer(this, 0L, 20L);
+```
+
+`BukkitRunnable` also exposes `getTaskId()` and `isCancelled()` for inspection, and throws `IllegalStateException` if you try to schedule the same instance twice.
+
+## Cancelling tasks
+
+Every scheduling method returns a `BukkitTask`. You have three ways to cancel a task:
+
+**1. Via the returned `BukkitTask`:**
+
+```java title="CancelViaBukkitTask.java"
+BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, runnable, 0L, 20L);
+
+// Later, when you want to stop it:
+task.cancel();
+```
+
+**2. Via the task ID:**
+
+```java title="CancelViaId.java"
+int taskId = Bukkit.getScheduler()
+    .runTaskTimer(this, runnable, 0L, 20L)
+    .getTaskId();
+
+// Cancel by ID:
+Bukkit.getScheduler().cancelTask(taskId);
+```
+
+**3. Cancel all tasks for your plugin at once (ideal for `onDisable`):**
+
+```java title="MyPlugin.java"
+@Override
+public void onDisable() {
+    Bukkit.getScheduler().cancelTasks(this);
+}
+```
+
+<Tip>
+  Calling `cancelTasks(this)` in `onDisable()` is a safe catch-all. It shuts down every repeating and pending task owned by your plugin, preventing threads from running against an unloaded plugin.
+</Tip>

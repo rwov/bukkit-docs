@@ -1,0 +1,191 @@
+---
+title: "Reading and Writing Plugin Configuration Files in Bukkit"
+sidebarTitle: "Configuration"
+description: "Read and write plugin settings using YamlConfiguration. Save defaults from your JAR, reload at runtime, and nest complex data structures."
+---
+
+Bukkit ships with a built-in YAML configuration system that handles reading, writing, and reloading settings files with no external dependencies. The `FileConfiguration` base class defines the save/load contract, and `YamlConfiguration` is the concrete implementation that reads and writes standard `.yml` files. Your plugin's main config lives at `plugins/YourPlugin/config.yml`, and Bukkit's `JavaPlugin` base class gives you direct helpers to manage it.
+
+## Default config.yml
+
+Create a file called `config.yml` in `src/main/resources/`. Bukkit will bundle it inside your JAR and use it as the default configuration. Call `saveDefaultConfig()` in `onEnable()` to write that bundled file to disk the first time the plugin loads — subsequent calls are no-ops if the file already exists.
+
+```yaml title="src/main/resources/config.yml"
+# General settings
+settings:
+  welcome-message: "Welcome to the server!"
+  max-homes: 5
+  debug-mode: false
+
+rewards:
+  daily-coins: 100
+  streak-bonus: 25
+```
+
+```java title="MyPlugin.java"
+@Override
+public void onEnable() {
+    saveDefaultConfig(); // writes config.yml to disk on first run
+}
+```
+
+<Tip>
+  Always call `saveDefaultConfig()` rather than manually checking whether the file exists. It is idempotent and respects any changes the server owner has already made.
+</Tip>
+
+## Reading values
+
+Use `getConfig()` to obtain the `FileConfiguration` instance, then call typed getters. Every getter accepts a default value as a fallback when the key is missing.
+
+```java title="ReadingConfig.java"
+FileConfiguration config = getConfig();
+
+// String — returns null if missing and no default is given
+String welcome = config.getString("settings.welcome-message");
+
+// String with explicit fallback
+String welcome = config.getString("settings.welcome-message", "Welcome!");
+
+// int with fallback
+int maxHomes = config.getInt("settings.max-homes", 3);
+
+// boolean with fallback
+boolean debug = config.getBoolean("settings.debug-mode", false);
+
+// double with fallback
+double multiplier = config.getDouble("rewards.multiplier", 1.0);
+
+// List of strings
+List<String> blocklist = config.getStringList("blocked-players");
+```
+
+Dot notation (`"settings.welcome-message"`) traverses nested YAML sections automatically — you do not need to grab an intermediate section object for simple reads.
+
+## Writing values
+
+Set a value in memory with `getConfig().set("key", value)`, then persist it to disk with `saveConfig()`. Calling `set` without `saveConfig` means the change disappears on the next server restart.
+
+```java title="WritingConfig.java"
+// Update a value in memory
+getConfig().set("settings.max-homes", 10);
+getConfig().set("players." + player.getUniqueId() + ".homes", homeCount);
+
+// Persist to disk
+saveConfig();
+```
+
+<Note>
+  `saveConfig()` writes the **entire** in-memory configuration back to `config.yml`, overwriting the file. It preserves keys and values but strips inline YAML comments. If comment preservation matters to you, consider using a custom `YamlConfiguration` file instead of the built-in config.
+</Note>
+
+## Reloading
+
+Call `reloadConfig()` to discard the in-memory configuration and re-read the file from disk. This is useful when you implement a `/myplugin reload` subcommand so operators can change settings without restarting the server.
+
+```java title="ReloadCommand.java"
+public class ReloadCommand implements CommandExecutor {
+    private final MyPlugin plugin;
+
+    public ReloadCommand(MyPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command,
+                             String label, String[] args) {
+        if (!sender.hasPermission("myplugin.reload")) {
+            sender.sendMessage("You do not have permission.");
+            return true;
+        }
+
+        plugin.reloadConfig();
+        sender.sendMessage("Configuration reloaded.");
+        return true;
+    }
+}
+```
+
+After `reloadConfig()` returns, the next call to `getConfig()` reflects the freshly-loaded file. Any cached references to the old `FileConfiguration` object are stale — always call `getConfig()` again rather than holding a long-lived field reference.
+
+## Custom config files
+
+When you need settings files beyond `config.yml` — for example a separate `warps.yml` or `messages.yml` — use `YamlConfiguration.loadConfiguration(File)` directly.
+
+```java title="CustomConfigManager.java"
+public class CustomConfigManager {
+    private final JavaPlugin plugin;
+    private File warpsFile;
+    private YamlConfiguration warpsConfig;
+
+    public CustomConfigManager(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public void load() {
+        warpsFile = new File(plugin.getDataFolder(), "warps.yml");
+
+        if (!warpsFile.exists()) {
+            // Copy bundled default from the JAR if present, else create blank
+            plugin.saveResource("warps.yml", false);
+        }
+
+        warpsConfig = YamlConfiguration.loadConfiguration(warpsFile);
+    }
+
+    public YamlConfiguration getWarpsConfig() {
+        return warpsConfig;
+    }
+
+    public void save() {
+        try {
+            warpsConfig.save(warpsFile);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Could not save warps.yml: " + e.getMessage());
+        }
+    }
+}
+```
+
+Call `load()` in `onEnable()` and `save()` whenever you modify the warp data.
+
+## ConfigurationSection and nested data
+
+`getConfigurationSection(String path)` returns a `ConfigurationSection` view of a nested YAML block. Use it to iterate keys or read deeply nested structures cleanly.
+
+```yaml title="src/main/resources/config.yml"
+kits:
+  starter:
+    items:
+      - WOODEN_SWORD
+      - BREAD
+    cooldown: 3600
+  warrior:
+    items:
+      - IRON_SWORD
+      - IRON_CHESTPLATE
+    cooldown: 7200
+```
+
+```java title="IteratingSections.java"
+ConfigurationSection kits = getConfig().getConfigurationSection("kits");
+
+if (kits != null) {
+    // getKeys(false) returns only top-level keys in this section
+    for (String kitName : kits.getKeys(false)) {
+        ConfigurationSection kit = kits.getConfigurationSection(kitName);
+        if (kit == null) continue;
+
+        List<String> items = kit.getStringList("items");
+        int cooldown = kit.getInt("cooldown", 3600);
+
+        getLogger().info("Kit " + kitName + " has " + items.size()
+                + " items and a " + cooldown + "s cooldown.");
+    }
+}
+```
+
+Pass `true` to `getKeys(true)` if you want a flattened set of all deeply-nested dot-path keys in the section.
+
+<Note>
+  `getConfigurationSection()` returns `null` when the path does not exist or points to a scalar value rather than a map. Always null-check the result before using it.
+</Note>
