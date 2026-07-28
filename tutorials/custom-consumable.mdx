@@ -1,0 +1,55 @@
+---
+title: "Build a Custom Consumable Item"
+description: "Create a modern component-based consumable with secure identity, cooldown grouping, and server-side validation."
+---
+
+This pattern separates client behavior from server authority.
+
+## 1. Create the item
+
+```java
+private final NamespacedKey itemId = new NamespacedKey(plugin, "item_id");
+
+public ItemStack createTonic() {
+    ItemStack stack = new ItemStack(Material.HONEY_BOTTLE);
+    ItemMeta meta = stack.getItemMeta();
+
+    meta.setDisplayName("§dBlink Tonic");
+    meta.getPersistentDataContainer().set(
+        itemId,
+        PersistentDataType.STRING,
+        "blink_tonic"
+    );
+
+    ConsumableComponent consumable = meta.getConsumable();
+    consumable.setConsumeSeconds(1.2f);
+    consumable.setConsumeParticles(true);
+    consumable.setAnimation(ConsumableComponent.Animation.DRINK);
+    consumable.setSound(Sound.ENTITY_GENERIC_DRINK);
+    meta.setConsumable(consumable);
+
+    UseCooldownComponent cooldown = meta.getUseCooldown();
+    cooldown.setCooldownSeconds(8.0f);
+    cooldown.setCooldownGroup(new NamespacedKey(plugin, "blink_tonics"));
+    meta.setUseCooldown(cooldown);
+
+    stack.setItemMeta(meta);
+    return stack;
+}
+```
+
+Method names in component APIs can change while experimental; compile this example against the exact current Spigot API and follow its `ItemMeta` signatures.
+
+## 2. Validate use
+
+In the relevant player item-use/consume event, read the persistent `item_id`. Check permission, game mode, region rules, cooldown, and destination safety. Do not use custom model data or the display name as identity.
+
+Apply the actual teleport, effect, charge, or database mutation on the server. The component controls vanilla consumption presentation and timing; it does not replace your rules.
+
+## 3. Handle cancellation and inventory state
+
+Decide whether the item should be consumed when the domain action fails. If the destination is unsafe or a payment transaction fails, cancel the event when supported and leave the item intact. Avoid manually decrementing the stack in two different event paths.
+
+## 4. Upgrade old items
+
+Store a schema version in persistent data. When an old tonic is loaded or used, rebuild its current components from the logical item ID. This keeps saved inventories usable after component formats evolve.

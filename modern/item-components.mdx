@@ -1,0 +1,54 @@
+---
+title: "Modern Item Components"
+description: "Use current ItemMeta component APIs for models, consumables, tools, weapons, equipment, cooldowns, and advanced behavior."
+---
+
+Modern item behavior is component-oriented. Current Spigot exposes isolated item-meta components for custom model data, food and consumables, tools, weapons, attack blocking, equipment, use cooldowns, use effects, jukebox playback, swing animation, and newer combat behavior.
+
+## Component catalog
+
+| Component | What it controls |
+| --- | --- |
+| `CustomModelDataComponent` | Float, flag, string, and color inputs consumed by resource-pack models |
+| `ConsumableComponent` | Consume time, animation, sound, particles, and consume effects |
+| `FoodComponent` | Nutrition, saturation, and eating behavior |
+| `ToolComponent` | Mining rules, speed, and tool behavior |
+| `WeaponComponent` | Weapon behavior |
+| `BlocksAttacksComponent` | Shield-like damage blocking and reductions |
+| `EquippableComponent` | Equipment slot, model, camera overlay, and equip behavior |
+| `UseCooldownComponent` | Reuse delay and shared cooldown group |
+| `UseEffectsComponent` | Attributes while the item is being used |
+| `JukeboxPlayableComponent` | Jukebox song assignment |
+| `SwingAnimationComponent` | Use/swing animation |
+| `KineticWeaponComponent` | Speed-dependent weapon behavior |
+| `PiercingWeaponComponent` | Multi-target piercing behavior |
+
+Many of these APIs are experimental. Read the current `ItemMeta` methods to obtain and set the matching component.
+
+## Copy, mutate, set back
+
+Component getters often return a snapshot. The safe pattern is:
+
+```java
+ItemStack item = new ItemStack(Material.PAPER);
+ItemMeta meta = item.getItemMeta();
+
+CustomModelDataComponent model = meta.getCustomModelDataComponent();
+model.setFloats(List.of(42.0f));
+model.setStrings(List.of("myplugin:quest_scroll"));
+meta.setCustomModelDataComponent(model);
+
+item.setItemMeta(meta);
+```
+
+Do not assume mutating a returned component automatically changes the item. Apply the component to the meta, then apply the meta to the stack.
+
+## Identity versus presentation
+
+Custom model data changes resource-pack model selection; it is not a secure item identity. Add a `PersistentDataContainer` key such as `myplugin:item_id` and validate it on use. Lore, name, color, model data, or material alone can collide with items from commands or other plugins.
+
+## Version strategy
+
+Component surfaces change as Mojang evolves item data. Keep item creation behind factories, avoid serializing implementation objects into a long-lived database, and store a small logical item ID plus your own schema version. Rebuild the current `ItemStack` from that record when possible.
+
+Official references: [item component package](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/meta/components/package-summary.html), [consumable package](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/meta/components/consumable/package-summary.html), and [ItemMeta](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/meta/ItemMeta.html).

@@ -1,0 +1,59 @@
+---
+title: "Build a Clickable Display Hologram"
+description: "Combine TextDisplay, ItemDisplay, Interaction, persistent IDs, and cleanup into an interactive world object."
+---
+
+A display hologram is a small scene: visual entities plus a separate interaction target.
+
+## 1. Spawn the scene
+
+```java
+NamespacedKey actionKey = new NamespacedKey(plugin, "display_action");
+
+TextDisplay text = world.spawn(base.clone().add(0, 1.2, 0), TextDisplay.class, d -> {
+    d.setText("Daily Reward\nClick to claim");
+    d.setBillboard(Display.Billboard.CENTER);
+    d.setShadowed(true);
+    d.setViewRange(24);
+});
+
+ItemDisplay item = world.spawn(base.clone().add(0, 0.55, 0), ItemDisplay.class, d -> {
+    d.setItemStack(rewardIcon());
+    d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
+});
+
+Interaction hitbox = world.spawn(base.clone().add(0, 0.8, 0), Interaction.class, i -> {
+    i.setInteractionWidth(1.2f);
+    i.setInteractionHeight(1.8f);
+    i.setResponsive(true);
+    i.getPersistentDataContainer().set(
+        actionKey,
+        PersistentDataType.STRING,
+        "daily_reward"
+    );
+});
+```
+
+Store the three UUIDs in a `DisplayScene` record. If the scene is temporary, mark entities non-persistent.
+
+## 2. Handle interaction
+
+Listen for the entity interaction event appropriate to your target API. Check that the clicked entity is an `Interaction`, read the persistent action value, then validate the player's world, distance, permission, cooldown, and reward state.
+
+Do not grant a reward merely because an entity has the right display name. Persistent data supplies routing identity; your reward service supplies authority.
+
+## 3. Animate efficiently
+
+Update the item display's transformation at a modest interval and use display interpolation for smooth client animation. Avoid one scheduler per hologram. Run one scene service task that iterates active scenes, skips unloaded worlds, and stops when there are none.
+
+## 4. Remove the whole scene
+
+```java
+public void removeScene(DisplayScene scene) {
+    removeIfPresent(scene.textId());
+    removeIfPresent(scene.itemId());
+    removeIfPresent(scene.interactionId());
+}
+```
+
+Remove scenes on plugin disable, arena teardown, or world unload as appropriate. For permanent scenes, save a logical scene record and reconcile entities on enable so duplicates and orphaned entities are repaired.

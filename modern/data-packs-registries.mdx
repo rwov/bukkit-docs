@@ -1,0 +1,44 @@
+---
+title: "Data Packs, Registries, Tags, and Feature Flags"
+description: "Discover data-driven content safely instead of hard-coding assumptions about every server and world."
+---
+
+Modern Minecraft moves content into registries and data packs. A plugin should ask the running server what exists rather than assuming every key is available.
+
+## Data packs
+
+Use `Bukkit.getDataPackManager()` or `Server.getDataPackManager()` to inspect installed packs and their state. Data packs can define or modify recipes, loot, tags, structures, world-generation content, dialogs, and other registered content supported by the target Minecraft version.
+
+Treat pack installation as deployment work. A plugin can detect missing dependencies and explain the problem, but changing server files or reloading data unexpectedly is usually an administrator decision.
+
+## Registries
+
+`Registry<T>` resolves keyed objects with `NamespacedKey`. Current API exposes many built-in registries and `Bukkit.getRegistry(Class<T>)` for supported types.
+
+```java
+NamespacedKey key = NamespacedKey.fromString("minecraft:sharpness");
+Enchantment enchantment = Registry.ENCHANTMENT.get(key);
+
+if (enchantment == null) {
+    getLogger().warning("Required enchantment is not registered: " + key);
+    return;
+}
+```
+
+Registry-aware objects may not always have a key. New code should follow the current `RegistryAware` contract: check registration when necessary and use `getKeyOrThrow()` only when absence is truly exceptional.
+
+## Tags
+
+Tags group registry entries. They are ideal for rules such as “all mineable pickaxe blocks” or a data-pack-defined category. Query membership instead of maintaining a long material switch that falls behind new releases.
+
+Remember that data packs can add or alter tags. Validate important invariants on enable and after any supported reload workflow.
+
+## Feature flags and worlds
+
+A type existing in the API does not guarantee it is enabled in every world. Check the world's feature set before spawning or constructing content tied to optional features. Provide a clear fallback or disable only the affected module.
+
+## Caching
+
+Registry objects and pack state are mostly lookup data, but reloads can invalidate assumptions. Cache your logical keys and rebuild derived state after a reload rather than persisting opaque implementation objects.
+
+Official references: [DataPackManager](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/packs/DataPackManager.html), [Registry](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Registry.html), [RegistryAware](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/RegistryAware.html), [Tag](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Tag.html), and [FeatureFlag](https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/FeatureFlag.html).
