@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "name": "CraftDocs — Bukkit & Spigot",
   "description": "The complete practical guide and API reference for Bukkit and Spigot Minecraft server plugin development.",
-  "theme": "palm",
+  "theme": "maple",
   "colors": {
     "primary": "#22c55e",
     "light": "#16a34a",
