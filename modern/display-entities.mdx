@@ -5,6 +5,22 @@ description: "Build holograms, floating models, labels, and animated scenes with
 
 Display entities are visual-only entities designed for client rendering. Bukkit exposes `TextDisplay`, `ItemDisplay`, and `BlockDisplay` through the shared `Display` interface.
 
+{/* visual-map:start */}
+<Frame caption="A TextDisplay, ItemDisplay, and Interaction entity combined into one clickable hologram.">
+  ![Display and Interaction Entities example](/assets/modern/display-hologram.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Display and Interaction Entities"]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Spawn a text display
 
 ```java

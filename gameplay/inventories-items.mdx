@@ -8,6 +8,23 @@ icon: "boxes-stacked"
 
 Create items, move stacks, manage equipment, and handle leftovers.
 
+{/* visual-map:start */}
+<Frame caption="A practical inventory view with plugin-owned buttons and pagination controls.">
+  ![Inventories and ItemStack example](/assets/modern/inventory-menu.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Logical item ID"] --> B["ItemStack"]
+  B --> C["ItemMeta and components"]
+  C --> D["Client presentation"]
+  B --> E["Persistent data"]
+  E --> F["Server-side validation"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

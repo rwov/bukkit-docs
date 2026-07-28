@@ -8,6 +8,21 @@ icon: "brackets-curly"
 
 `org.bukkit.plugin.messaging`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+sequenceDiagram
+  participant P as Plugin
+  participant S as Server
+  participant X as External system
+  P->>S: Validate request
+  S->>X: Send bounded message
+  X-->>S: Return response
+  S-->>P: Apply on main thread
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

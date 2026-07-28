@@ -8,6 +8,19 @@ icon: "bolt"
 
 Master handlers, priorities, cancellation, event families, and async events.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Server action"] --> B["Events and listeners"]
+  B --> C["Registered listener"]
+  C --> D{"Validate state"}
+  D -->|Allowed| E["Apply result"]
+  D -->|Rejected| F["Leave unchanged"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

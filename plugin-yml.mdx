@@ -6,6 +6,18 @@ description: "Complete reference for every plugin.yml field: required keys, opti
 
 `plugin.yml` is your plugin's manifest file. The server reads it directly from the root of your JAR before it loads any of your classes. It tells the server your plugin's name, entry-point class, version, dependencies, commands, and permissions. Omitting required fields or placing the file anywhere other than the JAR root will cause the server to reject your plugin entirely at startup.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["plugin.yml Reference: Configure..."]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Required fields
 
 You must include all three of the following fields in every `plugin.yml`. Missing any one of them will throw an exception and cause the server to skip your plugin.

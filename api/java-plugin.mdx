@@ -6,6 +6,19 @@ description: "Full method reference for JavaPlugin — the base class every Bukk
 
 Every Bukkit plugin extends `JavaPlugin`. It is the concrete base class that implements the `Plugin` interface and provides the full suite of helpers your plugin needs to interact with the server: configuration management, resource extraction, logging, command wiring, and lifecycle hooks. You never instantiate `JavaPlugin` directly — Bukkit's plugin loader creates your subclass instance and calls its lifecycle methods at the appropriate moments.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+stateDiagram-v2
+  [*] --> Loaded
+  Loaded --> Enabled: onEnable
+  Enabled --> Runtime: listeners and tasks
+  Runtime --> Disabled: onDisable
+  Disabled --> [*]
+```
+{/* visual-map:end */}
+
 ---
 
 ## Lifecycle Methods

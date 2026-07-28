@@ -6,6 +6,18 @@ description: "Define and check permissions in your Bukkit plugin. Declare defaul
 
 Bukkit's permission system gives you fine-grained control over what players can and cannot do with your plugin. Every permission is a dot-separated string (e.g., `myplugin.command.greet`), and Bukkit lets you declare these nodes in `plugin.yml` with sensible defaults, group them into hierarchies using wildcard parents, and check or grant them programmatically at runtime. You never need to hard-code "is this player an OP?" checks — instead you check a named permission node and let the server or a permissions plugin decide who holds it.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Player or sender"] --> B{"Has permission?"}
+  B -->|Yes| C["Run protected action"]
+  B -->|No| D["Explain denial"]
+  C --> E["Audit or persist result"]
+```
+{/* visual-map:end */}
+
 ## Declaring Permissions in plugin.yml
 
 The `permissions:` block in `plugin.yml` is where you register every node your plugin uses. Bukkit reads this at load time so that server administrators and permissions plugins can discover your nodes before any player connects.

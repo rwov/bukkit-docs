@@ -6,6 +6,18 @@ description: "Use PluginManager to register event listeners, fire custom events,
 
 `PluginManager` is the central hub for inter-plugin coordination on a Bukkit server. You access it at any point after your plugin is loaded via `getServer().getPluginManager()`, or through the static shorthand `Bukkit.getPluginManager()`. From it you can wire up event listeners, fire events, declare and query permissions, and inspect the state of every other plugin running on the server.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin code"] --> B["Public API contract"]
+  B --> C["Server-owned object"]
+  C --> D["Validated mutation"]
+  D --> E["Observable game state"]
+```
+{/* visual-map:end */}
+
 ---
 
 ## Registering Events

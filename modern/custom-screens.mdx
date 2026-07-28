@@ -5,6 +5,24 @@ description: "What an unmodified Minecraft client can display, how to compose po
 
 Bukkit can create excellent interfaces, but it cannot define an arbitrary new native screen on an unmodified client. The server may open screen types the vanilla protocol already understands, populate their data, react to clicks, and change client assets through a resource pack.
 
+{/* visual-map:start */}
+<Frame caption="A server-driven inventory screen on an unmodified client.">
+  ![Custom Screens and UI example](/assets/modern/inventory-menu.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Create view or dialog"] --> B["Open for player"]
+  B --> C["Receive interaction"]
+  C --> D{"Session and action valid?"}
+  D -->|Yes| E["Run domain action"]
+  D -->|No| F["Ignore or close"]
+  E --> G["Render next state"]
+```
+{/* visual-map:end */}
+
 ## Supported screen building blocks
 
 ### Inventories and menus

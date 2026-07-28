@@ -8,6 +8,24 @@ icon: "table-cells"
 
 Safe buttons, navigation, pagination, click protection, and cleanup.
 
+{/* visual-map:start */}
+<Frame caption="The finished menu layout used by this tutorial.">
+  ![Build a reusable GUI menu example](/assets/modern/inventory-menu.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Create view or dialog"] --> B["Open for player"]
+  B --> C["Receive interaction"]
+  C --> D{"Session and action valid?"}
+  D -->|Yes| E["Run domain action"]
+  D -->|No| F["Ignore or close"]
+  E --> G["Render next state"]
+```
+{/* visual-map:end */}
+
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture

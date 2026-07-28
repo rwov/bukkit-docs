@@ -8,6 +8,18 @@ icon: "brackets-curly"
 
 `org.bukkit.projectiles`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Spawn or obtain entity"] --> B["Configure public API"]
+  B --> C["Listen for lifecycle events"]
+  C --> D["Update owned state"]
+  D --> E["Remove and clean up"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

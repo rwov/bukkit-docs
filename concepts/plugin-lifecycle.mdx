@@ -6,6 +6,19 @@ description: "Understand when onLoad, onEnable, and onDisable are called in Bukk
 
 Every Bukkit plugin travels through three distinct lifecycle stages from the moment the server starts to the moment it shuts down. Bukkit calls `onLoad()` before worlds exist, `onEnable()` once the server is ready for normal operation, and `onDisable()` when the plugin is being torn down. Understanding exactly when each hook fires — and what is safe to do inside it — keeps your plugin stable and avoids subtle bugs that are hard to reproduce.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+stateDiagram-v2
+  [*] --> Loaded
+  Loaded --> Enabled: onEnable
+  Enabled --> Runtime: listeners and tasks
+  Runtime --> Disabled: onDisable
+  Disabled --> [*]
+```
+{/* visual-map:end */}
+
 ## The Three Lifecycle Hooks
 
 <Steps>

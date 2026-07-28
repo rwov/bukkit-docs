@@ -8,6 +8,20 @@ icon: "brackets-curly"
 
 `org.bukkit.block.spawner`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Server"] --> B["World"]
+  B --> C["Loaded chunk"]
+  C --> D["Block state"]
+  C --> E["Entities"]
+  D --> F["Events and updates"]
+  E --> F
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

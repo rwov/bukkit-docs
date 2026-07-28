@@ -8,6 +8,19 @@ icon: "terminal"
 
 Build command trees, sender checks, parsing, usage, and tab completion.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Command sender"] --> B["Parse arguments"]
+  B --> C{"Permission and input valid?"}
+  C -->|Yes| D["Call service"]
+  C -->|No| E["Return feedback"]
+  D --> F["Commands"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

@@ -6,6 +6,18 @@ description: "Create, build, and load your first Bukkit plugin in under 10 minut
 
 This guide walks you through every step needed to go from an empty directory to a running Bukkit plugin on a local Minecraft server. You will set up a Maven project, write a minimal `JavaPlugin` subclass, define a `plugin.yml` descriptor, build a JAR, and verify that your plugin loads correctly.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Java source"] --> B["Maven or Gradle"]
+  B --> C["Plugin JAR"]
+  C --> D["Test server plugins folder"]
+  D --> E["Enable, test, iterate"]
+```
+{/* visual-map:end */}
+
 <Tip>
   Keep a local SpigotMC or PaperMC test server handy before you begin. You will need a running server to verify the plugin loads in the final steps. Never test new plugins directly on a production server.
 </Tip>

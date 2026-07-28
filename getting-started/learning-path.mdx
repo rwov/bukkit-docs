@@ -8,6 +8,18 @@ icon: "route"
 
 A sequenced route from Java basics to production plugin architecture.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Java source"] --> B["Maven or Gradle"]
+  B --> C["Plugin JAR"]
+  C --> D["Test server plugins folder"]
+  D --> E["Enable, test, iterate"]
+```
+{/* visual-map:end */}
+
 ## Mental model
 
 Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.

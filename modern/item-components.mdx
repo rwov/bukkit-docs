@@ -5,6 +5,23 @@ description: "Use current ItemMeta component APIs for models, consumables, tools
 
 Modern item behavior is component-oriented. Current Spigot exposes isolated item-meta components for custom model data, food and consumables, tools, weapons, attack blocking, equipment, use cooldowns, use effects, jukebox playback, swing animation, and newer combat behavior.
 
+{/* visual-map:start */}
+<Frame caption="A consumable, tool, blocking item, and equippable item powered by modern components.">
+  ![Modern Item Components example](/assets/modern/item-components.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Logical item ID"] --> B["ItemStack"]
+  B --> C["ItemMeta and components"]
+  C --> D["Client presentation"]
+  B --> E["Persistent data"]
+  E --> F["Server-side validation"]
+```
+{/* visual-map:end */}
+
 ## Component catalog
 
 | Component | What it controls |

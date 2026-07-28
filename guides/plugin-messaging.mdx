@@ -6,6 +6,21 @@ description: "Use Bukkit plugin messaging channels to send and receive data betw
 
 Plugin messaging channels are a low-level byte-pipe that Minecraft uses to pass custom data between a server plugin and either the connected proxy (BungeeCord or Velocity) or a client-side mod. Each message is identified by a **channel name** and carries a raw byte array payload. Your plugin registers which channels it wants to send on (outgoing) or listen on (incoming), and the Bukkit `Messenger` handles routing. Channel names must follow the `namespace:name` format and consist only of `[a-z0-9/._-]` — the legacy `"BungeeCord"` channel is the notable exception to this rule.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+sequenceDiagram
+  participant P as Plugin
+  participant S as Server
+  participant X as External system
+  P->>S: Validate request
+  S->>X: Send bounded message
+  X-->>S: Return response
+  S-->>P: Apply on main thread
+```
+{/* visual-map:end */}
+
 ## Registering a channel
 
 Before you can send or receive messages you must declare your intent to the `Messenger`. Do this in `onEnable()`.

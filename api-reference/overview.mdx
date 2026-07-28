@@ -8,6 +8,18 @@ icon: "book"
 
 This catalog covers every public package exposed by the current Spigot API. Package pages explain scope, important types, safety rules, and link directly to the generated official reference for every class and member.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin code"] --> B["Public API contract"]
+  B --> C["Server-owned object"]
+  C --> D["Validated mutation"]
+  D --> E["Observable game state"]
+```
+{/* visual-map:end */}
+
 ## Boundaries
 
 - `org.bukkit`: shared Bukkit plugin contracts.

@@ -6,6 +6,20 @@ description: "The Chunk interface represents a 16x16 column of blocks. Load, unl
 
 A `Chunk` is a 16×16 column of blocks that extends from the bottom to the top of the world. The server loads and unloads chunks dynamically as players move around — only the chunks near active players are kept in memory at any given time. The `Chunk` interface gives you direct access to the blocks, entities, and tile entities within a chunk, as well as control over whether the chunk stays loaded.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart TD
+  A["Server"] --> B["World"]
+  B --> C["Loaded chunk"]
+  C --> D["Block state"]
+  C --> E["Entities"]
+  D --> F["Events and updates"]
+  E --> F
+```
+{/* visual-map:end */}
+
 ---
 
 ## Core Coordinate and World Methods

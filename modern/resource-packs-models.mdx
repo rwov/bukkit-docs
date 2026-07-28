@@ -5,6 +5,22 @@ description: "Deliver custom assets, select modern item models, react to pack st
 
 A resource pack is the supported way for an unmodified client to receive custom textures, models, fonts, sounds, and some UI assets. Bukkit requests the pack; the client downloads and renders it.
 
+{/* visual-map:start */}
+<Frame caption="Resource-pack models turn logical plugin items into distinct client visuals.">
+  ![Resource Packs and Custom Models example](/assets/modern/item-components.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Resource Packs and Custom Models"]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Send a versioned pack
 
 ```java

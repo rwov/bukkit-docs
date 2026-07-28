@@ -8,6 +8,19 @@ icon: "brackets-curly"
 
 `org.bukkit.event`
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Server action"] --> B["Events"]
+  B --> C["Registered listener"]
+  C --> D{"Validate state"}
+  D -->|Allowed| E["Apply result"]
+  D -->|Rejected| F["Leave unchanged"]
+```
+{/* visual-map:end */}
+
 This package is part of the public Bukkit/Spigot plugin API.
 
 ## Important types

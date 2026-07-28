@@ -6,6 +6,19 @@ description: "Reference for Bukkit command handling: CommandExecutor, TabComplet
 
 Bukkit's command system gives your plugin a clean, plugin.yml-driven way to handle slash commands typed by players and the server console. You declare your commands in `plugin.yml`, implement `CommandExecutor` to handle execution, optionally implement `TabCompleter` for tab-completion suggestions, and wire everything together through a `PluginCommand` retrieved from the server. This reference covers every interface, class, and helper you need.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Command sender"] --> B["Parse arguments"]
+  B --> C{"Permission and input valid?"}
+  C -->|Yes| D["Call service"]
+  C -->|No| E["Return feedback"]
+  D --> F["Command API Reference: CommandE..."]
+```
+{/* visual-map:end */}
+
 ---
 
 ## `CommandExecutor` Interface

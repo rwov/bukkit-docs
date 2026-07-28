@@ -5,6 +5,18 @@ description: "Ship modern APIs safely across versions and decide when Bukkit, a 
 
 Modern APIs move quickly. A design that is correct for the current Spigot release may not compile against an older API, and experimental signatures can change.
 
+{/* visual-map:start */}
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Plugin entry point"] --> B["Validate context"]
+  B --> C["Compatibility and Client Bounda..."]
+  C --> D["Bukkit API"]
+  D --> E["Server result"]
+```
+{/* visual-map:end */}
+
 ## Capability matrix
 
 | Technique | New visual layout | New client behavior | Server-version risk | Client install |

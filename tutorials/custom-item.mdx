@@ -8,6 +8,23 @@ icon: "wand-magic-sparkles"
 
 A namespaced item with PDC identity and interaction behavior.
 
+{/* visual-map:start */}
+<Frame caption="Custom item identity, presentation, and behavior are separate concerns.">
+  ![Create a custom item example](/assets/modern/item-components.webp)
+</Frame>
+
+## Visual map
+
+```mermaid
+flowchart LR
+  A["Logical item ID"] --> B["ItemStack"]
+  B --> C["ItemMeta and components"]
+  C --> D["Client presentation"]
+  B --> E["Persistent data"]
+  E --> F["Server-side validation"]
+```
+{/* visual-map:end */}
+
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture
