@@ -1,0 +1,272 @@
+---
+title: "JavaPlugin Class Reference for Bukkit Plugin Authors"
+sidebarTitle: "JavaPlugin"
+description: "Full method reference for JavaPlugin — the base class every Bukkit plugin extends. Covers lifecycle, config, resources, logging, and server access."
+---
+
+Every Bukkit plugin extends `JavaPlugin`. It is the concrete base class that implements the `Plugin` interface and provides the full suite of helpers your plugin needs to interact with the server: configuration management, resource extraction, logging, command wiring, and lifecycle hooks. You never instantiate `JavaPlugin` directly — Bukkit's plugin loader creates your subclass instance and calls its lifecycle methods at the appropriate moments.
+
+---
+
+## Lifecycle Methods
+
+Override these three methods to drive your plugin's behaviour. Bukkit calls them in a defined order; you do not call them yourself.
+
+### `onLoad()`
+
+```java
+public void onLoad()
+```
+
+Called after your plugin's class is instantiated but **before** `onEnable()` is called on any plugin. Because `onLoad()` fires for every plugin before any plugin's `onEnable()` fires, this is the right place to perform one-time setup that other plugins might depend on — for example, registering a custom `ChunkGenerator` or preparing a shared API object.
+
+<Note>
+  `onLoad()` is called even when the server is still resolving the full plugin
+  load order. Avoid touching gameplay systems (worlds, players) here; save that
+  work for `onEnable()`.
+</Note>
+
+### `onEnable()`
+
+```java
+public void onEnable()
+```
+
+Called when Bukkit enables your plugin. This is where you do the bulk of your startup work: registering event listeners, registering commands, scheduling tasks, connecting to databases, and loading configuration. The server is fully initialised at this point, and all hard dependencies declared in `plugin.yml` are already enabled.
+
+```java title="Typical onEnable() body"
+@Override
+public void onEnable() {
+    // Save the default config if none exists on disk yet
+    saveDefaultConfig();
+
+    // Register event listeners
+    getServer().getPluginManager().registerEvents(new MyListener(), this);
+
+    // Wire up a command executor
+    PluginCommand cmd = getCommand("mycommand");
+    if (cmd != null) {
+        cmd.setExecutor(new MyCommandExecutor());
+    }
+
+    getLogger().info("MyPlugin has been enabled!");
+}
+```
+
+### `onDisable()`
+
+```java
+public void onDisable()
+```
+
+Called when Bukkit disables your plugin — typically during server shutdown or when an operator runs `/reload`. Use this method to flush unsaved data to disk, close database connections, cancel any tasks you own, and release other external resources. Bukkit cancels all tasks and unregisters all event listeners registered through the standard API automatically, but data persistence is your responsibility.
+
+<Warning>
+  Never start new tasks or schedule work inside `onDisable()`. The server's
+  scheduler does not accept new work during shutdown.
+</Warning>
+
+---
+
+## Configuration
+
+`JavaPlugin` provides a built-in YAML configuration backed by `config.yml` in your plugin's data folder. All four methods operate on the same in-memory `FileConfiguration` instance.
+
+### `getConfig()`
+
+```java
+@NotNull
+public FileConfiguration getConfig()
+```
+
+Returns the plugin's active `FileConfiguration`. The first call transparently loads `config.yml` from disk (or the embedded default if no file exists yet). Subsequent calls return the same cached instance until you call `reloadConfig()`.
+
+```java title="Reading a config value"
+int maxPlayers = getConfig().getInt("max-players", 20);
+String motd = getConfig().getString("motd", "Welcome!");
+```
+
+### `saveConfig()`
+
+```java
+public void saveConfig()
+```
+
+Writes the current in-memory configuration back to `config.yml` on disk. Call this after you have modified values programmatically.
+
+```java title="Persisting a runtime config change"
+getConfig().set("last-seen." + player.getName(), System.currentTimeMillis());
+saveConfig();
+```
+
+### `saveDefaultConfig()`
+
+```java
+public void saveDefaultConfig()
+```
+
+Copies the `config.yml` bundled inside your JAR to the data folder if no `config.yml` already exists there. This is the idiomatic first call in `onEnable()` — it provisions the file for first-time users without ever overwriting customised values.
+
+<Tip>
+  Pair `saveDefaultConfig()` with default values set in your bundled
+  `config.yml`. Players can edit the file, and your code reads both their
+  overrides and your defaults transparently via `getConfig()`.
+</Tip>
+
+### `reloadConfig()`
+
+```java
+public void reloadConfig()
+```
+
+Discards the cached `FileConfiguration` and re-reads `config.yml` from disk. If your plugin supports a `/reload` command, call this method to pick up any changes an operator made to the file while the server was running.
+
+---
+
+## Resources
+
+These methods give you access to files embedded inside your plugin's JAR at build time — such as default configs, SQL schema files, or message templates.
+
+### `getResource(String filename)`
+
+```java
+@Nullable
+public InputStream getResource(@NotNull String filename)
+```
+
+Returns an `InputStream` for the named file bundled in your JAR, or `null` if the file does not exist. The path is relative to the root of the JAR (no leading slash). Use this to read raw bytes from any embedded asset.
+
+```java title="Reading an embedded schema file"
+InputStream schema = getResource("schema.sql");
+if (schema != null) {
+    // process stream
+}
+```
+
+### `saveResource(String resourcePath, boolean replace)`
+
+```java
+public void saveResource(@NotNull String resourcePath, boolean replace)
+```
+
+Extracts the named embedded file to the plugin's data folder, preserving any subdirectory structure declared in `resourcePath`. When `replace` is `false`, an existing file is left untouched and a warning is logged. Set `replace` to `true` to overwrite unconditionally.
+
+<Warning>
+  Throws `IllegalArgumentException` if `resourcePath` is null, empty, or
+  refers to a resource that does not exist in the JAR.
+</Warning>
+
+```java title="Extracting a bundled language file on first run"
+saveResource("lang/en_US.yml", false);
+```
+
+### `getTextResource(String file)`
+
+```java
+@Nullable
+protected final Reader getTextResource(@NotNull String file)
+```
+
+A convenience wrapper around `getResource(String)` that returns a UTF-8 `Reader` instead of a raw `InputStream`. Returns `null` when the underlying `getResource()` call returns `null`. Useful for reading embedded text files (YAML, SQL, JSON) without manually wrapping the stream.
+
+```java title="Reading an embedded text file"
+Reader reader = getTextResource("defaults.yml");
+if (reader != null) {
+    YamlConfiguration defaults = YamlConfiguration.loadConfiguration(reader);
+}
+```
+
+---
+
+## Server Access
+
+Use these methods whenever you need to reach the running server, log a message, or inspect your own plugin metadata.
+
+<ResponseField name="getServer()" type="Server" required>
+  Returns the `Server` instance currently running this plugin. From here you can
+  reach the scheduler (`getServer().getScheduler()`), the plugin manager
+  (`getServer().getPluginManager()`), online players, worlds, and every other
+  server-level API.
+</ResponseField>
+
+<ResponseField name="getLogger()" type="Logger" required>
+  Returns a `java.util.logging.Logger` that automatically prefixes every message
+  with your plugin's name. Prefer this over `System.out.println` — messages
+  appear in the server console and log file with proper context.
+</ResponseField>
+
+<ResponseField name="getDataFolder()" type="File" required>
+  Returns the `File` representing your plugin's data directory
+  (`plugins/YourPlugin/`). The folder may not exist yet; create it with
+  `getDataFolder().mkdirs()` before writing files if you do not use
+  `saveDefaultConfig()` or `saveResource()`.
+</ResponseField>
+
+<ResponseField name="getFile()" type="File" required>
+  Returns the `File` object pointing to your plugin's JAR on disk. Useful for
+  advanced class-loading scenarios; most plugins never need this.
+</ResponseField>
+
+<ResponseField name="getDescription()" type="PluginDescriptionFile" required>
+  Returns the `PluginDescriptionFile` parsed from your `plugin.yml`. Use it to
+  read your plugin's name, version, authors, and other metadata at runtime. See
+  [PluginDescriptionFile](/api/plugin-description) for the full method list.
+</ResponseField>
+
+```java title="Logging with plugin-prefixed output"
+getLogger().info("Loaded " + arenaCount + " arenas.");
+getLogger().warning("Could not connect to database — falling back to flat-file storage.");
+```
+
+---
+
+## Plugin Command Access
+
+### `getCommand(String name)`
+
+```java
+@Nullable
+public PluginCommand getCommand(@NotNull String name)
+```
+
+Returns the `PluginCommand` registered under the given name (or alias) for **this plugin**. The command must be declared in your `plugin.yml`; commands that exist but belong to another plugin are not returned. Returns `null` if no matching command is found.
+
+Use the returned `PluginCommand` to attach an executor and a tab completer at runtime:
+
+```java title="Wiring a command in onEnable()"
+PluginCommand spawn = getCommand("spawn");
+if (spawn != null) {
+    spawn.setExecutor(new SpawnCommandExecutor());
+    spawn.setTabCompleter(new SpawnTabCompleter());
+}
+```
+
+<Note>
+  The `name` argument is lowercased before lookup. Passing `"Spawn"` and
+  `"spawn"` both resolve to the same command.
+</Note>
+
+---
+
+## Quick-Reference Table
+
+| Method | Return Type | Description |
+|---|---|---|
+| `onLoad()` | `void` | Override — called before any plugin is enabled |
+| `onEnable()` | `void` | Override — called when this plugin is enabled |
+| `onDisable()` | `void` | Override — called when this plugin is disabled |
+| `getConfig()` | `FileConfiguration` | Returns the live config, loading from disk on first call |
+| `saveConfig()` | `void` | Writes the in-memory config to `config.yml` |
+| `saveDefaultConfig()` | `void` | Copies bundled `config.yml` to data folder if absent |
+| `reloadConfig()` | `void` | Discards the cache and re-reads `config.yml` from disk |
+| `getResource(String)` | `InputStream` | Opens a bundled JAR resource as a stream |
+| `saveResource(String, boolean)` | `void` | Extracts a bundled resource to the data folder |
+| `getTextResource(String)` | `Reader` | Opens a bundled JAR resource as a UTF-8 `Reader` |
+| `getServer()` | `Server` | Returns the running `Server` instance |
+| `getLogger()` | `Logger` | Returns a plugin-prefixed `Logger` |
+| `getDataFolder()` | `File` | Returns the plugin's data directory |
+| `getFile()` | `File` | Returns the plugin's JAR file |
+| `getDescription()` | `PluginDescriptionFile` | Returns parsed `plugin.yml` metadata |
+| `getCommand(String)` | `PluginCommand` | Returns this plugin's registered command by name |
+| `isEnabled()` | `boolean` | Returns `true` when the plugin is currently enabled |
+| `getPlugin(Class<T>)` | `T` | Static — retrieves the singleton instance of a plugin class |

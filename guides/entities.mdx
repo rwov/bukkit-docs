@@ -1,0 +1,306 @@
+---
+title: "Spawning and Controlling Entities with Bukkit"
+sidebarTitle: "Entities"
+description: "Spawn, find, and manipulate Minecraft entities — mobs, projectiles, and more — using the Bukkit Entity and LivingEntity APIs."
+---
+
+Every mob, projectile, item drop, and decoration in a Minecraft world is an entity. Bukkit represents all of them through a rich interface hierarchy rooted at `Entity`, which gives you access to position, velocity, naming, persistence metadata, and the ability to remove an entity from the world. As you move down the hierarchy toward `LivingEntity`, `Mob`, and specific types like `Zombie` or `Creeper`, you gain access to increasingly specialized behaviour such as AI control, health management, and equipment. This guide shows you how to work with entities at every level of that hierarchy.
+
+## Entity Hierarchy
+
+Understanding the inheritance tree helps you know which interface to cast to:
+
+| Interface | Extends | Examples |
+|---|---|---|
+| `Entity` | — | All entities |
+| `LivingEntity` | `Entity` | Players, mobs, ArmorStands |
+| `Mob` | `LivingEntity` | All AI-driven mobs |
+| `Monster` | `Mob` | Zombie, Skeleton, Creeper |
+| `Animals` | `Mob` | Cow, Pig, Sheep |
+| `Projectile` | `Entity` | Arrow, Snowball, ThrownPotion |
+| `Player` | `HumanEntity` → `LivingEntity` | Connected players |
+
+Cast the result of `spawnEntity()` or `getNearbyEntities()` to the appropriate sub-interface to unlock type-specific methods.
+
+## Spawning an Entity
+
+Call `world.spawnEntity(location, EntityType)` to place any entity into the world at a given `Location`. The method returns the spawned `Entity`, which you can immediately cast to a more specific type.
+
+```java SpawnExample.java
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Zombie;
+
+public class SpawnExample {
+
+    public Zombie spawnZombie(World world, Location location) {
+        // spawnEntity returns Entity — cast to Zombie for type-specific access
+        Zombie zombie = (Zombie) world.spawnEntity(location, EntityType.ZOMBIE);
+        return zombie;
+    }
+
+    public void spawnVariousEntities(World world, Location loc) {
+        world.spawnEntity(loc, EntityType.SKELETON);
+        world.spawnEntity(loc, EntityType.CREEPER);
+        world.spawnEntity(loc, EntityType.ARMOR_STAND);
+        world.spawnEntity(loc, EntityType.ARROW);
+    }
+}
+```
+
+## Configuring a LivingEntity
+
+After spawning, configure the entity by calling methods on `LivingEntity` or its sub-interfaces. You can set health, disable AI, assign a custom display name, and more.
+
+<Steps>
+
+### Set Health
+
+Use `setHealth(double)` to set current HP. The value must be between `0` and `getMaxHealth()`.
+
+```java ConfigureEntity.java
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Zombie;
+
+public class ConfigureEntity {
+
+    public void configureZombie(Zombie zombie) {
+        // Set max health via the attribute system, then restore to full
+        zombie.getAttribute(Attribute.MAX_HEALTH).setBaseValue(40.0);
+        zombie.setHealth(40.0);
+    }
+}
+```
+
+### Assign a Custom Name
+
+Call `setCustomName()` from the `Entity` interface. Pass `true` to `setCustomNameVisible()` to show the name tag above the mob at all times.
+
+```java NameExample.java
+import org.bukkit.entity.Entity;
+
+public class NameExample {
+
+    public void nameEntity(Entity entity, String name) {
+        entity.setCustomName(name);
+        entity.setCustomNameVisible(true);
+    }
+}
+```
+
+### Disable AI
+
+`setAI(false)` on a `LivingEntity` freezes the mob in place — it stops moving, targeting, and attacking, but still takes damage normally.
+
+```java AIExample.java
+import org.bukkit.entity.LivingEntity;
+
+public class AIExample {
+
+    public void freeze(LivingEntity entity) {
+        entity.setAI(false);
+    }
+
+    public void unfreeze(LivingEntity entity) {
+        entity.setAI(true);
+    }
+}
+```
+
+### Prevent Natural Despawn
+
+By default, mobs despawn when no player is nearby. Call `setRemoveWhenFarAway(false)` to keep a mob persistent.
+
+```java PersistExample.java
+import org.bukkit.entity.LivingEntity;
+
+public class PersistExample {
+
+    public void keepForever(LivingEntity entity) {
+        entity.setRemoveWhenFarAway(false);
+    }
+}
+```
+
+</Steps>
+
+## Finding Nearby Entities
+
+`world.getNearbyEntities(location, dx, dy, dz)` returns all entities within a box of the given half-extents. You can optionally pass a `Predicate` to filter the results.
+
+```java NearbyEntitiesExample.java
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import java.util.Collection;
+
+public class NearbyEntitiesExample {
+
+    public void damageNearbyMobs(Player player) {
+        Location loc   = player.getLocation();
+        World world    = player.getWorld();
+
+        // Search a 10×10×10 box around the player
+        Collection<Entity> nearby = world.getNearbyEntities(loc, 5, 5, 5);
+
+        for (Entity entity : nearby) {
+            // Skip the player who cast the effect
+            if (entity.equals(player)) continue;
+
+            if (entity instanceof LivingEntity living) {
+                // Deal 4 hearts of damage
+                living.damage(8.0, player);
+            }
+        }
+    }
+
+    public void findNearbyZombies(Location loc, World world) {
+        // Filter with a predicate to get only Zombies
+        Collection<Entity> zombies = world.getNearbyEntities(
+            loc, 10, 10, 10,
+            e -> e.getType() == org.bukkit.entity.EntityType.ZOMBIE
+        );
+
+        Bukkit.getLogger().info("Nearby zombies: " + zombies.size());
+    }
+}
+```
+
+## Removing an Entity
+
+Call `entity.remove()` to despawn any entity immediately. You cannot remove a `Player` with this method — use `player.kickPlayer(String)` instead.
+
+```java RemoveExample.java
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import java.util.Collection;
+
+public class RemoveExample {
+
+    public void removeAllZombies(World world, Location center) {
+        Collection<Entity> entities = world.getNearbyEntities(center, 50, 50, 50);
+        for (Entity entity : entities) {
+            if (entity.getType() == EntityType.ZOMBIE) {
+                entity.remove();
+            }
+        }
+    }
+}
+```
+
+## Entity Metadata with PersistentDataContainer
+
+`PersistentDataContainer` lets you attach arbitrary typed values to any entity that survive server restarts. Access it via `entity.getPersistentDataContainer()`, which comes from the `PersistentDataHolder` interface implemented by `Entity`.
+
+```java PersistentDataExample.java
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Entity;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class PersistentDataExample {
+
+    private final JavaPlugin plugin;
+
+    public PersistentDataExample(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public void tagEntity(Entity entity) {
+        NamespacedKey key = new NamespacedKey(plugin, "boss_tier");
+        PersistentDataContainer pdc = entity.getPersistentDataContainer();
+
+        // Store an integer value under our custom key
+        pdc.set(key, PersistentDataType.INTEGER, 3);
+    }
+
+    public int readTag(Entity entity) {
+        NamespacedKey key = new NamespacedKey(plugin, "boss_tier");
+        PersistentDataContainer pdc = entity.getPersistentDataContainer();
+
+        if (pdc.has(key, PersistentDataType.INTEGER)) {
+            return pdc.get(key, PersistentDataType.INTEGER);
+        }
+        return 0; // default when key is absent
+    }
+
+    public void removeTag(Entity entity) {
+        NamespacedKey key = new NamespacedKey(plugin, "boss_tier");
+        entity.getPersistentDataContainer().remove(key);
+    }
+}
+```
+
+<Tip>
+Always namespace your PDC keys with your plugin instance to avoid key collisions with other plugins. The `NamespacedKey(plugin, "key")` constructor automatically uses your plugin's name as the namespace.
+</Tip>
+
+## Common Entity Types
+
+| `EntityType` Constant | Interface | Notes |
+|---|---|---|
+| `ZOMBIE` | `Zombie` | Attacks players; burns in daylight |
+| `SKELETON` | `Skeleton` | Ranged bow attacker |
+| `CREEPER` | `Creeper` | Explodes when near players |
+| `ARMOR_STAND` | `ArmorStand` | Holdable decoration; can be invisible |
+| `ITEM` | `Item` | Dropped item on the ground |
+| `ARROW` | `Arrow` | Fired or spawned projectile |
+| `SNOWBALL` | `Snowball` | Throwable projectile; pushes mobs |
+| `VILLAGER` | `Villager` | Trading NPC |
+
+## Full Example: Spawn a Named Boss Zombie
+
+Putting it all together — spawn a custom zombie boss at a player's location, configure its stats, tag it with PDC data, and give it a visible name.
+
+```java BossZombieSpawner.java
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Zombie;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class BossZombieSpawner {
+
+    private final JavaPlugin plugin;
+
+    public BossZombieSpawner(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public Zombie spawnBoss(Player player) {
+        Location loc   = player.getLocation();
+
+        // 1. Spawn the zombie
+        Zombie boss = (Zombie) player.getWorld()
+            .spawnEntity(loc, EntityType.ZOMBIE);
+
+        // 2. Boost max health and restore it to full
+        boss.getAttribute(Attribute.MAX_HEALTH).setBaseValue(100.0);
+        boss.setHealth(100.0);
+
+        // 3. Name and make it impossible to accidentally despawn
+        boss.setCustomName("§4§lCave King");
+        boss.setCustomNameVisible(true);
+        boss.setRemoveWhenFarAway(false);
+
+        // 4. Tag it as a boss in PDC so other systems can recognise it
+        NamespacedKey key = new NamespacedKey(plugin, "is_boss");
+        boss.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, true);
+
+        // 5. Notify the spawning player
+        player.sendMessage("§cA boss has awakened nearby!");
+
+        return boss;
+    }
+}
+```

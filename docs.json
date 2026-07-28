@@ -1,72 +1,98 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
-  "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
+  "name": "Minecraft",
+  "theme": "palm",
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "https://media.brand.dev/44722d85-5609-4ecc-bbad-0a8107086cd8.svg",
+    "dark": "https://media.brand.dev/44722d85-5609-4ecc-bbad-0a8107086cd8.svg"
+  },
+  "favicon": "https://media.brand.dev/d92ea122-e670-417e-8b35-a99b3098b485.jpg",
+  "colors": {
+    "primary": "#77746e",
+    "light": "#161616",
+    "dark": "#d2c2c2"
+  },
+  "font": {
+    "headings": { "family": "Noto Sans" },
+    "body": { "family": "Noto Sans" }
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "type": "github",
+      "href": "https://github.com/rwov/bukkit-api-fork"
     }
   },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "plugin-yml"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/plugin-lifecycle",
+              "concepts/events",
+              "concepts/commands",
+              "concepts/permissions"
+            ]
+          },
+          {
+            "group": "Working With the World",
+            "pages": [
+              "guides/players",
+              "guides/worlds-blocks",
+              "guides/entities",
+              "guides/inventory-items"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guides/scheduler",
+              "guides/configuration",
+              "guides/plugin-messaging",
+              "guides/services"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Plugin System",
+            "pages": [
+              "api/java-plugin",
+              "api/plugin-description",
+              "api/plugin-manager"
+            ]
+          },
+          {
+            "group": "Server & World",
+            "pages": [
+              "api/server",
+              "api/world",
+              "api/chunk"
+            ]
+          },
+          {
+            "group": "Events & Commands",
+            "pages": [
+              "api/events",
+              "api/commands",
+              "api/scheduler"
+            ]
+          }
+        ]
+      }
     ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
   }
 }

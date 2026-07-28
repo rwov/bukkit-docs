@@ -1,0 +1,116 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Bukkit API",
+  "projectDescription": "A Java plugin API for Minecraft servers, enabling developers to build server-side plugins that interact with the game world, players, events, and server configuration.",
+  "theme": "palm",
+  "primaryColor": "#77746e",
+  "lightColor": "#161616",
+  "darkColor": "#d2c2c2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "plugin-yml"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/plugin-lifecycle",
+              "concepts/events",
+              "concepts/commands",
+              "concepts/permissions"
+            ]
+          },
+          {
+            "group": "Working With the World",
+            "pages": [
+              "guides/players",
+              "guides/worlds-blocks",
+              "guides/entities",
+              "guides/inventory-items"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guides/scheduler",
+              "guides/configuration",
+              "guides/plugin-messaging",
+              "guides/services"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Plugin System",
+            "pages": [
+              "api/java-plugin",
+              "api/plugin-description",
+              "api/plugin-manager"
+            ]
+          },
+          {
+            "group": "Server & World",
+            "pages": [
+              "api/server",
+              "api/world",
+              "api/chunk"
+            ]
+          },
+          {
+            "group": "Events & Commands",
+            "pages": [
+              "api/events",
+              "api/commands",
+              "api/scheduler"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Plugin lifecycle management with onEnable/onDisable/onLoad hooks",
+    "Rich event system with prioritized, cancellable event handling",
+    "Command registration and tab-completion framework",
+    "Hierarchical permissions system with OP/non-OP defaults",
+    "YAML-based configuration with hot-reload support",
+    "Sync and async task scheduling via BukkitScheduler",
+    "Full world, block, and entity manipulation API",
+    "Inventory and item meta management",
+    "Player profile and UUID-based player management",
+    "Plugin messaging channels for cross-server communication",
+    "Scoreboard and boss-bar APIs",
+    "Custom world generator API"
+  ],
+  "publicApiSurface": [
+    "JavaPlugin (abstract base class for all plugins)",
+    "Plugin interface (onEnable, onDisable, onLoad, getConfig, getServer)",
+    "Server interface (getOnlinePlayers, getWorld, getScheduler, getPluginManager)",
+    "Listener interface + @EventHandler annotation",
+    "CommandExecutor#onCommand + TabCompleter#onTabComplete",
+    "BukkitScheduler (runTask, runTaskLater, runTaskTimer, runTaskAsynchronously)",
+    "FileConfiguration / YamlConfiguration (get, set, save, reload)",
+    "Permission / PermissionDefault",
+    "PluginDescriptionFile (plugin.yml runtime container)",
+    "PluginManager (registerEvents, registerCommand, callEvent)",
+    "World / Block / BlockData API",
+    "Entity / LivingEntity / Player API",
+    "Inventory / ItemStack / ItemMeta API",
+    "BossBar API",
+    "Scoreboard / Team / Objective API",
+    "BukkitRunnable (chainable task helper)",
+    "ServicesManager (registerService, getRegistration)",
+    "Messenger / PluginMessageListener (plugin channels)"
+  ]
+}

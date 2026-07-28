@@ -1,0 +1,292 @@
+---
+title: "Managing Players with the Bukkit Player API"
+sidebarTitle: "Players"
+description: "Send messages, teleport, modify inventory, check permissions, and manage player state using the Bukkit Player and OfflinePlayer APIs."
+---
+
+The Bukkit `Player` interface is your primary gateway to every connected player on your server. It extends `HumanEntity`, `OfflinePlayer`, and `Permissible`, which means a single `Player` object gives you access to everything from chat messaging and teleportation to inventory management and permission checks. This guide walks you through the most common operations you'll perform on players in your plugins.
+
+## Getting a Player Reference
+
+Before you can interact with a player, you need a reference to their `Player` object. Bukkit exposes several ways to obtain one.
+
+```java PlayerLookup.java
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import java.util.UUID;
+
+public class PlayerLookup {
+
+    // Look up a player by display name (partial match)
+    public Player byName(String name) {
+        return Bukkit.getPlayer(name);   // returns null if not online
+    }
+
+    // Look up a player by their UUID (exact, no partial matching)
+    public Player byUUID(UUID uuid) {
+        return Bukkit.getPlayer(uuid);   // returns null if not online
+    }
+
+    // Iterate every currently connected player
+    public void listAll() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Bukkit.getLogger().info(player.getName() + " is online.");
+        }
+    }
+}
+```
+
+Inside an event handler you can call `event.getPlayer()` directly — no lookup required:
+
+```java PlayerJoinListener.java
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.entity.Player;
+
+public class PlayerJoinListener implements Listener {
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        player.sendMessage("Welcome to the server, " + player.getName() + "!");
+    }
+}
+```
+
+<Note>
+`Bukkit.getPlayer(String)` performs a partial name match. If you need an exact match, use `Bukkit.getPlayerExact(String)` instead to avoid ambiguous results when two player names share a prefix.
+</Note>
+
+## Sending Messages
+
+You can send a plain `String` message to a player with `sendMessage`. Combine `ChatColor` constants with string concatenation to add color and formatting.
+
+```java MessagingExample.java
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+
+public class MessagingExample {
+
+    public void greet(Player player) {
+        // Plain string
+        player.sendMessage("Hello from the server!");
+
+        // Colored message using ChatColor constants
+        player.sendMessage(ChatColor.GREEN + "Your balance: " + ChatColor.GOLD + "$500");
+
+        // Formatting constants (bold, italic, etc.)
+        player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Warning: PvP zone ahead!");
+    }
+}
+```
+
+<Tip>
+For modern Paper/Bukkit servers (1.16+), you can also pass an Adventure `net.kyori.adventure.text.Component` to `sendMessage(Component)` for full RGB color support and click/hover events. Prefer components in new plugins targeting Paper-based servers.
+</Tip>
+
+## Teleportation
+
+Teleport a player by passing a `Location` to `player.teleport()`. A `Location` binds world coordinates to a specific `World` instance, and optionally carries yaw and pitch for the direction the player faces after teleporting.
+
+```java TeleportExample.java
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+public class TeleportExample {
+
+    public void teleportToSpawn(Player player) {
+        World world = Bukkit.getWorld("world");
+        // Location(World, x, y, z)
+        Location spawn = new Location(world, 0.5, 64, 0.5);
+        player.teleport(spawn);
+    }
+
+    public void teleportWithDirection(Player player) {
+        World world = player.getWorld();
+        // Location(World, x, y, z, yaw, pitch)
+        Location arena = new Location(world, 100.5, 70, 200.5, 90f, 0f);
+        player.teleport(arena);
+    }
+
+    // Teleport one player to another player's location
+    public void teleportToPlayer(Player source, Player target) {
+        source.teleport(target.getLocation());
+    }
+}
+```
+
+<Warning>
+Teleporting a player across worlds loads the destination chunk synchronously. Avoid teleporting large numbers of players in a tight loop on the main thread — spread calls across ticks or use async chunk pre-loading if available.
+</Warning>
+
+## Health and Food
+
+Player health is represented as a `double` in the range `0.0` to `getMaxHealth()`. A value of `0` means the player is dead. Food level is an `int` from `0` (starving) to `20` (full).
+
+```java HealthFoodExample.java
+import org.bukkit.entity.Player;
+
+public class HealthFoodExample {
+
+    public void healToFull(Player player) {
+        double maxHp = player.getMaxHealth();
+        player.setHealth(maxHp);          // fully restore HP
+    }
+
+    public void feedToFull(Player player) {
+        player.setFoodLevel(20);          // fully restore hunger
+        player.setSaturation(20f);        // optional: restore saturation too
+    }
+
+    public void showStats(Player player) {
+        double hp      = player.getHealth();
+        double maxHp   = player.getMaxHealth();
+        int    food    = player.getFoodLevel();
+
+        player.sendMessage("HP: " + hp + "/" + maxHp + "  |  Food: " + food + "/20");
+    }
+}
+```
+
+<Note>
+`getMaxHealth()` comes from the `Damageable` interface. The default max health for a player is `20.0` (10 full hearts), but plugins and attribute modifiers can change this value.
+</Note>
+
+## Game Mode
+
+Switch a player's game mode with `setGameMode()`, passing any `GameMode` constant.
+
+```java GameModeExample.java
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+
+public class GameModeExample {
+
+    public void setCreative(Player player) {
+        player.setGameMode(GameMode.CREATIVE);
+    }
+
+    public void setSurvival(Player player) {
+        player.setGameMode(GameMode.SURVIVAL);
+    }
+
+    public void setSpectator(Player player) {
+        player.setGameMode(GameMode.SPECTATOR);
+    }
+
+    public void setAdventure(Player player) {
+        player.setGameMode(GameMode.ADVENTURE);
+    }
+
+    // Read the current game mode
+    public boolean isInCreative(Player player) {
+        return player.getGameMode() == GameMode.CREATIVE;
+    }
+}
+```
+
+## Player Inventory
+
+`player.getInventory()` returns a `PlayerInventory` that extends the standard `Inventory` interface. You can add items, remove them, check for specific materials, and manipulate individual slots.
+
+```java InventoryExample.java
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+
+public class InventoryExample {
+
+    public void giveItem(Player player) {
+        ItemStack sword = new ItemStack(Material.DIAMOND_SWORD, 1);
+        // addItem returns a map of items that did not fit; handle overflow
+        player.getInventory().addItem(sword);
+    }
+
+    public void removeAllStone(Player player) {
+        PlayerInventory inv = player.getInventory();
+        inv.remove(Material.STONE);   // removes all stone stacks
+    }
+
+    public void checkForDiamond(Player player) {
+        if (player.getInventory().contains(Material.DIAMOND)) {
+            player.sendMessage("You're carrying diamonds!");
+        }
+    }
+
+    public void setHelmet(Player player) {
+        ItemStack helmet = new ItemStack(Material.DIAMOND_HELMET, 1);
+        player.getInventory().setHelmet(helmet);
+    }
+}
+```
+
+<Tip>
+`addItem()` returns a `HashMap<Integer, ItemStack>` of items that couldn't be added because the inventory was full. Always check the return value and handle leftover items — for example, by dropping them at the player's location with `world.dropItemNaturally()`.
+</Tip>
+
+## Checking Permissions
+
+The `Player` interface implements `Permissible`, so you can check any permission node with `hasPermission()`.
+
+```java PermissionExample.java
+import org.bukkit.entity.Player;
+
+public class PermissionExample {
+
+    public void checkFly(Player player) {
+        if (player.hasPermission("myplugin.fly")) {
+            player.setAllowFlight(true);
+            player.setFlying(true);
+            player.sendMessage("Flight enabled!");
+        } else {
+            player.sendMessage("You do not have permission to fly.");
+        }
+    }
+}
+```
+
+## Working with OfflinePlayer
+
+Not every player you want to interact with is currently online. The `OfflinePlayer` interface lets you read stored data — such as UUID, last-known name, and ban status — for any player who has connected to the server before.
+
+```java OfflinePlayerExample.java
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import java.util.UUID;
+
+public class OfflinePlayerExample {
+
+    public void inspect(UUID uuid) {
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+
+        String name        = offlinePlayer.getName();           // last known name
+        boolean hasPlayed  = offlinePlayer.hasPlayedBefore();
+        boolean isBanned   = offlinePlayer.isBanned();
+        long lastSeen      = offlinePlayer.getLastPlayed();     // epoch ms
+
+        Bukkit.getLogger().info(name + " last seen: " + lastSeen);
+    }
+
+    // Check if an OfflinePlayer is currently online
+    public boolean isCurrentlyOnline(UUID uuid) {
+        OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+        return op.isOnline();
+    }
+
+    // Cast to Player if online
+    public void messageIfOnline(UUID uuid, String message) {
+        OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+        if (op.isOnline()) {
+            op.getPlayer().sendMessage(message);
+        }
+    }
+}
+```
+
+<Warning>
+`Bukkit.getOfflinePlayer(String)` is deprecated for name-based lookups because names are not unique over time — players can change them. Always prefer UUID-based lookups for persistent storage.
+</Warning>
