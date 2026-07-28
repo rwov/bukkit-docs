@@ -122,6 +122,25 @@
               "advanced/distribution",
               "advanced/troubleshooting"
             ]
+          },
+          {
+            "group": "Existing in-depth guides",
+            "pages": [
+              "quickstart",
+              "plugin-yml",
+              "concepts/plugin-lifecycle",
+              "concepts/events",
+              "concepts/commands",
+              "concepts/permissions",
+              "guides/players",
+              "guides/worlds-blocks",
+              "guides/entities",
+              "guides/inventory-items",
+              "guides/scheduler",
+              "guides/configuration",
+              "guides/plugin-messaging",
+              "guides/services"
+            ]
           }
         ]
       },
@@ -163,6 +182,20 @@
             "pages": [
               "api-reference/overview",
               "api-reference/type-system"
+            ]
+          },
+          {
+            "group": "Detailed class references",
+            "pages": [
+              "api/java-plugin",
+              "api/plugin-description",
+              "api/plugin-manager",
+              "api/server",
+              "api/world",
+              "api/chunk",
+              "api/events",
+              "api/commands",
+              "api/scheduler"
             ]
           },
           {
