@@ -6,75 +6,33 @@ icon: "message-square"
 
 # Chat, titles, and action bars
 
-Create localized and rate-limited player communication.
+Choose the smallest message surface that matches the urgency and lifetime of the information. Chat persists, action bars are transient, and titles interrupt the center of the screen.
 
-{/* visual-map:start */}
-## Visual map
+## Select a channel
 
-```mermaid
-flowchart LR
-  A["Player state"] --> B["Plugin service"]
-  B --> C["Bukkit player API"]
-  C --> D["Client feedback"]
-  C --> E["Server-side result"]
-```
-{/* visual-map:end */}
+- Use chat for commands, explanations, and information players may need to scroll back to.
+- Use an action bar for rapidly changing status such as cooldowns or progress.
+- Use titles sparingly for major state transitions; pair them with sound or chat only when needed.
+- Console and non-player senders require plain command feedback rather than player-only UI.
 
-## Mental model
+## Message hygiene
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Build messages from trusted templates and escaped player-controlled values.
+- Rate-limit repeated warnings and deduplicate unchanged action-bar content.
+- Keep localization keys separate from business logic.
+- Do not rely on color alone to convey success, warning, or failure.
 
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class ChattitlesandactionbarsFeature {
-    private final JavaPlugin plugin;
-
-    public ChattitlesandactionbarsFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Chat, titles, and action bars enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+player.sendMessage("Kit selected: " + safeKitName);
+player.sendActionBar("Cooldown: " + remainingSeconds + "s");
+player.sendTitle("Round starting", "Prepare to fight", 10, 40, 10);
 ```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
 
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate identity, world, and feature ownership at the point of mutation.
+- Keep main-thread work bounded; move only isolated data work off-thread.
+- Handle disconnect, unload, reload, and disable explicitly.
+- Read the exact API contract for the server version you target.

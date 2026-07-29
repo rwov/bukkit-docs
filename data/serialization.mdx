@@ -6,76 +6,45 @@ icon: "shuffle"
 
 # Serialization
 
-Serialize stable custom domain values into configuration-safe maps.
+Serialization converts domain values into stable primitives or maps. The serialized shape is a public data contract: version it, validate it, and do not leak live Bukkit objects into long-lived storage.
 
-{/* visual-map:start */}
-## Visual map
+## Choose a shape
 
-```mermaid
-flowchart LR
-  A["External or stored data"] --> B["Parse"]
-  B --> C{"Validate schema"}
-  C -->|Valid| D["Domain model"]
-  C -->|Invalid| E["Targeted error"]
-  D --> F["Serialization"]
-```
-{/* visual-map:end */}
+- Use strings, booleans, numbers, lists, and maps that YAML or your database can represent predictably.
+- Store UUIDs and namespaced keys as strings.
+- Store locations as world UUID/name plus coordinates and rotation, not a retained `World` object.
+- Avoid Java native serialization for long-lived plugin data.
 
-## Mental model
+## ConfigurationSerializable
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Implement `ConfigurationSerializable` only when integration with Bukkit YAML is useful.
+- Return a map containing an explicit version and required fields.
+- Register aliases/types before loading data that depends on them.
+- Treat the deserializing constructor or factory as untrusted input parsing.
 
-## Core workflow
+## Migration
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Accept old versions explicitly and convert them to the current domain model.
+- Reject unknown future versions rather than guessing.
+- Write migrated data after successful validation and backup strategy.
+- Test round trips, missing fields, malformed values, and renamed worlds.
+
+## Example
 
 ```java
-public final class SerializationFeature {
-    private final JavaPlugin plugin;
-
-    public SerializationFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Serialization enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
+public Map<String, Object> serialize() {
+    return Map.of(
+        "version", 1,
+        "owner", owner.toString(),
+        "world", worldId.toString(),
+        "x", x, "y", y, "z", z
+    );
 }
 ```
 
-## Edge cases
+## Failure checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Define timeouts, limits, and ownership at the boundary.
+- Validate decoded values before they reach gameplay logic.
+- Make retries and duplicate delivery idempotent where necessary.
+- Close clients, pools, executors, and registrations during disable.

@@ -8,18 +8,6 @@ icon: "people-arrows"
 
 Expiring accept, deny, cancel, and disconnect-safe requests.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Build teleport requests"] --> B["Build the core"]
-  B --> C["Register entry points"]
-  C --> D["Handle edge cases"]
-  D --> E["Test and ship"]
-```
-{/* visual-map:end */}
-
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture
@@ -80,5 +68,5 @@ public void onDisable() {
 Test permission denial, invalid input, duplicate actions, disconnects, world unloads, storage failure, restart recovery, and many simultaneous players.
 
 <Check>
-The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
+  The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
 </Check>

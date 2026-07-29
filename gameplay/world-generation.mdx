@@ -6,77 +6,56 @@ icon: "mountain-sun"
 
 # World generation
 
-Create chunk generators, biome providers, noise, and structures.
+Custom generation is invoked while chunks are being created and may run frequently or concurrently depending on the server. Generation must be deterministic for a seed and chunk coordinate, bounded, and independent of live world mutation.
 
-{/* visual-map:start */}
-## Visual map
+## Register a generator
+
+- Return a `ChunkGenerator` from the plugin entry point or configure its ID through world creation.
+- Use the supplied world info, random source, chunk coordinates, and chunk data.
+- Write only within the provided chunk data during generation.
+- Do not call ordinary live-world block APIs from generator callbacks.
+
+## Determinism
+
+- Derive randomness from the supplied seed/context, not wall-clock time.
+- The same seed and plugin version should produce the same terrain.
+- Version persistent generator behavior before changing algorithms on existing worlds.
+- Keep cross-chunk structures coordinated through deterministic region math.
+
+## Performance and safety
+
+- Avoid blocking I/O, network calls, and server-global scans.
+- Cache only immutable generator configuration or bounded pure computations.
+- Respect min/max height and biome/provider contracts.
+- Test chunk borders, negative coordinates, restart generation, and upgrades.
+
+## Generation boundary
 
 ```mermaid
-flowchart TD
-  A["Server"] --> B["World"]
-  B --> C["Loaded chunk"]
-  C --> D["Block state"]
-  C --> E["Entities"]
-  D --> F["Events and updates"]
-  E --> F
+flowchart LR
+  A["Seed + chunk coordinates"] --> B["Pure terrain decisions"]
+  B --> C["ChunkData writes"]
+  C --> D["Generated chunk"]
+  E["Versioned config"] --> B
 ```
-{/* visual-map:end */}
 
-## Mental model
-
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
-
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class WorldgenerationFeature {
-    private final JavaPlugin plugin;
-
-    public WorldgenerationFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
+@Override
+public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
+    ChunkData data = createChunkData(world);
+    int floor = world.getMinHeight() + 64;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) data.setBlock(x, floor, z, Material.STONE);
     }
-
-    public void enable() {
-        plugin.getLogger().fine("World generation enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
+    return data;
 }
 ```
 
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate the current object type, ownership, and lifecycle before mutation.
+- Bound hot-path loops and spatial work.
+- Respect cancellation and changes made by other plugins.
+- Remove plugin-owned runtime state during feature shutdown.

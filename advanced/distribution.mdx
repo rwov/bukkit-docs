@@ -6,75 +6,43 @@ icon: "package"
 
 # Publishing plugins
 
-Version, package, license, document, and release responsibly.
+A release is the exact tested artifact plus metadata that lets administrators evaluate compatibility, install it, upgrade it, and recover from failure.
 
-{/* visual-map:start */}
-## Visual map
+## Artifact
 
-```mermaid
-flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["Publishing plugins"]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
-```
-{/* visual-map:end */}
+- Build from a clean checkout with the project wrapper.
+- Test the final shaded/relocated JAR.
+- Inspect that `plugin.yml`, licenses, and required resources are present.
+- Publish a checksum and keep immutable release artifacts.
 
-## Mental model
+## Versioning and compatibility
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Use a consistent version scheme and changelog.
+- List tested Minecraft/server and Java versions.
+- Call out breaking configuration, data, command, permission, or API changes.
+- Provide migration and rollback instructions before shipping irreversible formats.
 
-## Core workflow
+## Documentation
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Explain installation, required/optional dependencies, permissions, commands, configuration, and data storage.
+- Include support channels and a minimal diagnostic checklist.
+- Disclose metrics, network access, update checks, and collected data.
+- Choose a license for your code and comply with bundled dependency licenses.
+
+## Example
 
 ```java
-public final class PublishingpluginsFeature {
-    private final JavaPlugin plugin;
-
-    public PublishingpluginsFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Publishing plugins enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+// Example release checks performed by CI:
+// 1. clean compile and tests
+// 2. inspect JAR contents
+// 3. start integration server with final JAR
+// 4. save logs and checksum
+// 5. attach the exact verified artifact to the release
 ```
 
-## Edge cases
+## Review checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- The feature has one clear lifecycle owner.
+- Failure paths are observable and preserve valid previous state.
+- Resource, queue, cache, and loop bounds are explicit.
+- The final built JAR is tested on every claimed server line.

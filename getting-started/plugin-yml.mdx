@@ -6,75 +6,49 @@ icon: "file-code"
 
 # plugin.yml reference
 
-Declare metadata, commands, permissions, dependencies, and compatibility.
+`plugin.yml` is parsed before your plugin enables. Invalid metadata can prevent the entry class from loading, so treat it as part of the executable contract.
 
-{/* visual-map:start */}
-## Visual map
+## Required identity
 
-```mermaid
-flowchart LR
-  A["Java source"] --> B["Maven or Gradle"]
-  B --> C["Plugin JAR"]
-  C --> D["Test server plugins folder"]
-  D --> E["Enable, test, iterate"]
-```
-{/* visual-map:end */}
+- `name` is the human-readable plugin name.
+- `version` identifies the artifact; build tooling may expand it.
+- `main` is the fully qualified `JavaPlugin` subclass.
+- `api-version` opts into modern material and API behavior for the declared release.
 
-## Mental model
+## Commands and permissions
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Each command key can define `description`, `usage`, `aliases`, and `permission`.
+- Permission entries can define `description`, `default`, and `children`.
+- A declared permission does not replace runtime authorization checks.
+- Keep command names lowercase and avoid collisions with common server commands.
 
-## Core workflow
+## Load relationships
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- `depend` requires another plugin and orders this plugin after it.
+- `softdepend` changes order when the other plugin exists but does not require it.
+- `loadbefore` asks Bukkit to load this plugin before named optional consumers.
+- Still check capabilities at runtime because metadata alone does not guarantee a compatible API.
 
-```java
-public final class pluginymlreferenceFeature {
-    private final JavaPlugin plugin;
+## Complete shape
 
-    public pluginymlreferenceFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("plugin.yml reference enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+```yaml
+name: ExamplePlugin
+version: 1.0.0
+main: com.example.plugin.ExamplePlugin
+api-version: '1.21'
+authors: [YourName]
+commands:
+  example:
+    description: Runs the example command
+    usage: /example <value>
+    permission: example.use
+permissions:
+  example.use:
+    description: Allows /example
+    default: true
+softdepend: [Vault]
 ```
 
-## Edge cases
+## Done check
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+Test the final JAR through a clean server start and stop. Treat warnings and shutdown failures as defects, not harmless development noise.

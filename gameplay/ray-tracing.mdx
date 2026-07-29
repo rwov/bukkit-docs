@@ -6,75 +6,56 @@ icon: "crosshairs"
 
 # Vectors and ray tracing
 
-Perform targeting, collisions, bounding boxes, and spatial queries.
+Vectors express direction and displacement; ray traces test a finite segment against blocks or entities. Always choose an origin, normalized direction, maximum distance, collision policy, and filter.
 
-{/* visual-map:start */}
-## Visual map
+## Vector basics
+
+- Clone mutable `Location` and `Vector` values before changing them.
+- Normalize direction when distance should be measured in blocks.
+- Use dot products for facing/alignment and squared distance for comparisons that do not need a square root.
+- Never normalize a zero-length vector.
+
+## Ray trace policy
+
+- Choose block-only, entity-only, or combined world ray tracing.
+- Set fluid collision and passable-block behavior intentionally.
+- Filter out the shooter and unrelated or invulnerable entities.
+- Keep maximum distance and entity ray size bounded.
+
+## Results
+
+- A miss returns `null`.
+- A hit may contain a block, entity, exact hit position, and block face depending on the method.
+- Re-check permission and target validity before mutating.
+- Do not use broad nearby-entity scans when one ray trace represents the mechanic.
+
+## Ray result flow
 
 ```mermaid
 flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["Vectors and ray tracing"]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
+  A["Eye origin"] --> B["Normalized direction"]
+  B --> C["Finite ray segment"]
+  C --> D{"First collision"}
+  D --> E["Block hit"]
+  D --> F["Entity hit"]
+  D --> G["Miss"]
 ```
-{/* visual-map:end */}
 
-## Mental model
-
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
-
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class VectorsandraytracingFeature {
-    private final JavaPlugin plugin;
-
-    public VectorsandraytracingFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Vectors and ray tracing enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+Location eye = player.getEyeLocation();
+Vector direction = eye.getDirection().normalize();
+RayTraceResult hit = player.getWorld().rayTrace(
+    eye, direction, 6.0, FluidCollisionMode.NEVER, true, 0.2,
+    entity -> entity != player && entity.isValid()
+);
+if (hit != null && hit.getHitEntity() != null) handleTarget(hit.getHitEntity());
 ```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
 
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate the current object type, ownership, and lifecycle before mutation.
+- Bound hot-path loops and spatial work.
+- Respect cancellation and changes made by other plugins.
+- Remove plugin-owned runtime state during feature shutdown.

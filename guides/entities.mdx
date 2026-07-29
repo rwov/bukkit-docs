@@ -6,24 +6,12 @@ description: "Spawn, find, and manipulate Minecraft entities — mobs, projectil
 
 Every mob, projectile, item drop, and decoration in a Minecraft world is an entity. Bukkit represents all of them through a rich interface hierarchy rooted at `Entity`, which gives you access to position, velocity, naming, persistence metadata, and the ability to remove an entity from the world. As you move down the hierarchy toward `LivingEntity`, `Mob`, and specific types like `Zombie` or `Creeper`, you gain access to increasingly specialized behaviour such as AI control, health management, and equipment. This guide shows you how to work with entities at every level of that hierarchy.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["Bukkit Entity API: Spawning, AI..."]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
-```
-{/* visual-map:end */}
-
 ## Entity Hierarchy
 
 Understanding the inheritance tree helps you know which interface to cast to:
 
 | Interface | Extends | Examples |
-|---|---|---|
+| --- | --- | --- |
 | `Entity` | — | All entities |
 | `LivingEntity` | `Entity` | Players, mobs, ArmorStands |
 | `Mob` | `LivingEntity` | All AI-driven mobs |
@@ -66,76 +54,6 @@ public class SpawnExample {
 After spawning, configure the entity by calling methods on `LivingEntity` or its sub-interfaces. You can set health, disable AI, assign a custom display name, and more.
 
 <Steps>
-
-### Set Health
-
-Use `setHealth(double)` to set current HP. The value must be between `0` and `getMaxHealth()`.
-
-```java ConfigureEntity.java
-import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Zombie;
-
-public class ConfigureEntity {
-
-    public void configureZombie(Zombie zombie) {
-        // Set max health via the attribute system, then restore to full
-        zombie.getAttribute(Attribute.MAX_HEALTH).setBaseValue(40.0);
-        zombie.setHealth(40.0);
-    }
-}
-```
-
-### Assign a Custom Name
-
-Call `setCustomName()` from the `Entity` interface. Pass `true` to `setCustomNameVisible()` to show the name tag above the mob at all times.
-
-```java NameExample.java
-import org.bukkit.entity.Entity;
-
-public class NameExample {
-
-    public void nameEntity(Entity entity, String name) {
-        entity.setCustomName(name);
-        entity.setCustomNameVisible(true);
-    }
-}
-```
-
-### Disable AI
-
-`setAI(false)` on a `LivingEntity` freezes the mob in place — it stops moving, targeting, and attacking, but still takes damage normally.
-
-```java AIExample.java
-import org.bukkit.entity.LivingEntity;
-
-public class AIExample {
-
-    public void freeze(LivingEntity entity) {
-        entity.setAI(false);
-    }
-
-    public void unfreeze(LivingEntity entity) {
-        entity.setAI(true);
-    }
-}
-```
-
-### Prevent Natural Despawn
-
-By default, mobs despawn when no player is nearby. Call `setRemoveWhenFarAway(false)` to keep a mob persistent.
-
-```java PersistExample.java
-import org.bukkit.entity.LivingEntity;
-
-public class PersistExample {
-
-    public void keepForever(LivingEntity entity) {
-        entity.setRemoveWhenFarAway(false);
-    }
-}
-```
-
 </Steps>
 
 ## Finding Nearby Entities
@@ -251,13 +169,13 @@ public class PersistentDataExample {
 ```
 
 <Tip>
-Always namespace your PDC keys with your plugin instance to avoid key collisions with other plugins. The `NamespacedKey(plugin, "key")` constructor automatically uses your plugin's name as the namespace.
+  Always namespace your PDC keys with your plugin instance to avoid key collisions with other plugins. The `NamespacedKey(plugin, "key")` constructor automatically uses your plugin's name as the namespace.
 </Tip>
 
 ## Common Entity Types
 
 | `EntityType` Constant | Interface | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `ZOMBIE` | `Zombie` | Attacks players; burns in daylight |
 | `SKELETON` | `Skeleton` | Ranged bow attacker |
 | `CREEPER` | `Creeper` | Explodes when near players |

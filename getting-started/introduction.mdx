@@ -6,75 +6,29 @@ icon: "compass"
 
 # Introduction
 
-Understand Bukkit, CraftBukkit, Spigot, Paper, plugins, and server architecture.
+A plugin is a JAR loaded by the server into the same JVM as the game. Bukkit is the API contract; CraftBukkit is the server implementation behind it; Spigot distributes a performance-focused CraftBukkit build and API; Paper extends that ecosystem with additional APIs and patches.
 
-{/* visual-map:start */}
-## Visual map
+## Choose the API boundary
 
-```mermaid
-flowchart LR
-  A["Java source"] --> B["Maven or Gradle"]
-  B --> C["Plugin JAR"]
-  C --> D["Test server plugins folder"]
-  D --> E["Enable, test, iterate"]
-```
-{/* visual-map:end */}
+- Write ordinary plugin code against `org.bukkit` and `org.spigotmc` interfaces.
+- Treat CraftBukkit and net.minecraft.server classes as version-sensitive internals.
+- Compile the API as a provided dependency because the server supplies it at runtime.
+- Check the server implementation and version before using platform-specific extensions.
 
-## Mental model
+## How a plugin reaches the game
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- The server discovers `plugin.yml` inside the JAR.
+- It creates the declared `JavaPlugin` class and calls lifecycle hooks.
+- Your plugin registers commands, listeners, tasks, and services during enable.
+- Events and API calls operate on server-owned players, worlds, entities, inventories, and registries.
 
-## Core workflow
+## Thread and ownership rules
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- The main server thread owns most live game state.
+- Database, file, and HTTP work should run away from the main thread, then schedule only the result application back on it.
+- Store stable identifiers such as UUIDs and namespaced keys across sessions; resolve live objects when needed.
+- Release tasks, listeners, services, executors, and connections when the plugin disables.
 
-```java
-public final class IntroductionFeature {
-    private final JavaPlugin plugin;
+## Done check
 
-    public IntroductionFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Introduction enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
-```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+Verify the built artifact from a clean build and test it through a full server start and stop. Record the exact Java, server, and plugin versions when behavior differs between environments.

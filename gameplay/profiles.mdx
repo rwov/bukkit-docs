@@ -6,75 +6,35 @@ icon: "id-card"
 
 # Player profiles and skulls
 
-Work with PlayerProfile, textures, identity, and caching.
+`PlayerProfile` represents identity plus optional properties such as textures. A profile can be incomplete; completing or resolving it may involve external profile services.
 
-{/* visual-map:start */}
-## Visual map
+## Create and inspect profiles
 
-```mermaid
-flowchart LR
-  A["Player state"] --> B["Plugin service"]
-  B --> C["Bukkit player API"]
-  C --> D["Client feedback"]
-  C --> E["Server-side result"]
-```
-{/* visual-map:end */}
+- Use the server API to create profiles by UUID and/or name.
+- Check whether the profile has the properties your output requires.
+- Do not treat a name-only profile as a verified durable identity.
+- Copy or cache stable texture results with an expiry rather than resolving on every render.
 
-## Mental model
+## Apply to skulls
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Create a player-head `ItemStack`, obtain `SkullMeta`, set the owning profile, then write the meta back.
+- Perform any blocking profile resolution away from the main thread.
+- Before applying an async result, verify the inventory, slot, and session still refer to the same request.
+- Respect rate limits and provide a default head on failure.
 
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class PlayerprofilesandskullsFeature {
-    private final JavaPlugin plugin;
-
-    public PlayerprofilesandskullsFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Player profiles and skulls enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+SkullMeta meta = (SkullMeta) head.getItemMeta();
+meta.setOwnerProfile(profile);
+meta.setDisplayName("Profile: " + profile.getName());
+head.setItemMeta(meta);
 ```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
 
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate identity, world, and feature ownership at the point of mutation.
+- Keep main-thread work bounded; move only isolated data work off-thread.
+- Handle disconnect, unload, reload, and disable explicitly.
+- Read the exact API contract for the server version you target.

@@ -6,68 +6,46 @@ icon: "clock"
 
 # Scheduler
 
-Run delayed, repeating, sync, and async tasks safely.
+The scheduler coordinates work with server ticks. Synchronous tasks run on the main thread; asynchronous tasks run elsewhere and must not freely touch live Bukkit state.
 
-{/* visual-map:start */}
-## Visual map
+## Timing
 
-```mermaid
-flowchart LR
-  A["Main thread snapshot"] --> B["Async I/O or CPU work"]
-  B --> C["Schedule continuation"]
-  C --> D{"State still valid?"}
-  D -->|Yes| E["Apply on main thread"]
-  D -->|No| F["Discard stale result"]
-```
-{/* visual-map:end */}
+- One server tick is normally 50 ms, but lag stretches real elapsed time.
+- Use ticks for game sequencing and wall-clock time for real deadlines.
+- A repeating task's period controls scheduling, not guaranteed real-time precision.
+- Keep and cancel the returned `BukkitTask` when the feature ends.
 
-## Mental model
+## Sync versus async
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Use sync tasks for players, worlds, entities, inventories, and most Bukkit APIs.
+- Use async work for blocking database, file, or HTTP operations and isolated CPU work.
+- Snapshot only the primitive or immutable data needed before leaving the main thread.
+- Schedule a sync continuation and re-resolve/revalidate state before applying results.
 
-## Core workflow
+## Cancellation
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Cancel tasks when their session, world, entity, or feature ends.
+- A task may cancel itself when its terminal condition is met.
+- Do not create one repeating task per object when one bounded coordinator can update many.
+- `BukkitScheduler#cancelTasks(plugin)` is a final safety net, not a replacement for ownership.
+
+## Example
 
 ```java
+UUID playerId = player.getUniqueId();
 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
     Profile profile = repository.load(playerId);
     Bukkit.getScheduler().runTask(plugin, () -> {
-        Player player = Bukkit.getPlayer(playerId);
-        if (player != null) applyProfile(player, profile);
+        Player current = Bukkit.getPlayer(playerId);
+        if (current == null || !current.isOnline()) return;
+        sessions.open(current, profile);
     });
 });
 ```
 
-## Edge cases
+## Production check
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate inputs and capabilities before mutation.
+- Keep hot-path work bounded and observable.
+- Re-check live state after any delay or asynchronous boundary.
+- Clean up every resource owned by the feature during disable.

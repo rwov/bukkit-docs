@@ -8,19 +8,6 @@ icon: "plug"
 
 Publish services, interfaces, events, and compatibility contracts.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Commands and listeners"] --> B["Application services"]
-  B --> C["Domain rules"]
-  B --> D["Bukkit adapter"]
-  B --> E["Repository or integration"]
-  D --> F["Minecraft server"]
-```
-{/* visual-map:end */}
-
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture
@@ -81,5 +68,5 @@ public void onDisable() {
 Test permission denial, invalid input, duplicate actions, disconnects, world unloads, storage failure, restart recovery, and many simultaneous players.
 
 <Check>
-The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
+  The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
 </Check>

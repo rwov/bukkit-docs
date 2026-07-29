@@ -6,18 +6,6 @@ description: "Send messages, teleport, modify inventory, check permissions, and 
 
 The Bukkit `Player` interface is your primary gateway to every connected player on your server. It extends `HumanEntity`, `OfflinePlayer`, and `Permissible`, which means a single `Player` object gives you access to everything from chat messaging and teleportation to inventory management and permission checks. This guide walks you through the most common operations you'll perform on players in your plugins.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Player state"] --> B["Plugin service"]
-  B --> C["Bukkit player API"]
-  C --> D["Client feedback"]
-  C --> E["Server-side result"]
-```
-{/* visual-map:end */}
-
 ## Getting a Player Reference
 
 Before you can interact with a player, you need a reference to their `Player` object. Bukkit exposes several ways to obtain one.
@@ -67,7 +55,7 @@ public class PlayerJoinListener implements Listener {
 ```
 
 <Note>
-`Bukkit.getPlayer(String)` performs a partial name match. If you need an exact match, use `Bukkit.getPlayerExact(String)` instead to avoid ambiguous results when two player names share a prefix.
+  `Bukkit.getPlayer(String)` performs a partial name match. If you need an exact match, use `Bukkit.getPlayerExact(String)` instead to avoid ambiguous results when two player names share a prefix.
 </Note>
 
 ## Sending Messages
@@ -94,7 +82,7 @@ public class MessagingExample {
 ```
 
 <Tip>
-For modern Paper/Bukkit servers (1.16+), you can also pass an Adventure `net.kyori.adventure.text.Component` to `sendMessage(Component)` for full RGB color support and click/hover events. Prefer components in new plugins targeting Paper-based servers.
+  For modern Paper/Bukkit servers (1.16\+), you can also pass an Adventure `net.kyori.adventure.text.Component` to `sendMessage(Component)` for full RGB color support and click/hover events. Prefer components in new plugins targeting Paper-based servers.
 </Tip>
 
 ## Teleportation
@@ -131,7 +119,7 @@ public class TeleportExample {
 ```
 
 <Warning>
-Teleporting a player across worlds loads the destination chunk synchronously. Avoid teleporting large numbers of players in a tight loop on the main thread — spread calls across ticks or use async chunk pre-loading if available.
+  Teleporting a player across worlds loads the destination chunk synchronously. Avoid teleporting large numbers of players in a tight loop on the main thread — spread calls across ticks or use async chunk pre-loading if available.
 </Warning>
 
 ## Health and Food
@@ -164,7 +152,7 @@ public class HealthFoodExample {
 ```
 
 <Note>
-`getMaxHealth()` comes from the `Damageable` interface. The default max health for a player is `20.0` (10 full hearts), but plugins and attribute modifiers can change this value.
+  `getMaxHealth()` comes from the `Damageable` interface. The default max health for a player is `20.0` (10 full hearts), but plugins and attribute modifiers can change this value.
 </Note>
 
 ## Game Mode
@@ -237,7 +225,7 @@ public class InventoryExample {
 ```
 
 <Tip>
-`addItem()` returns a `HashMap<Integer, ItemStack>` of items that couldn't be added because the inventory was full. Always check the return value and handle leftover items — for example, by dropping them at the player's location with `world.dropItemNaturally()`.
+  `addItem()` returns a `HashMap<Integer, ItemStack>` of items that couldn't be added because the inventory was full. Always check the return value and handle leftover items — for example, by dropping them at the player's location with `world.dropItemNaturally()`.
 </Tip>
 
 ## Checking Permissions
@@ -300,5 +288,5 @@ public class OfflinePlayerExample {
 ```
 
 <Warning>
-`Bukkit.getOfflinePlayer(String)` is deprecated for name-based lookups because names are not unique over time — players can change them. Always prefer UUID-based lookups for persistent storage.
+  `Bukkit.getOfflinePlayer(String)` is deprecated for name-based lookups because names are not unique over time — players can change them. Always prefer UUID-based lookups for persistent storage.
 </Warning>

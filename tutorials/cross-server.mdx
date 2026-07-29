@@ -8,21 +8,6 @@ icon: "network-wired"
 
 Transfer players and coordinate shared state.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-sequenceDiagram
-  participant P as Plugin
-  participant S as Server
-  participant X as External system
-  P->>S: Validate request
-  S->>X: Send bounded message
-  X-->>S: Return response
-  S-->>P: Apply on main thread
-```
-{/* visual-map:end */}
-
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture
@@ -83,5 +68,5 @@ public void onDisable() {
 Test permission denial, invalid input, duplicate actions, disconnects, world unloads, storage failure, restart recovery, and many simultaneous players.
 
 <Check>
-The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
+  The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
 </Check>

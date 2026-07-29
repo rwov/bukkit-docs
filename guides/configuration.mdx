@@ -6,19 +6,6 @@ description: "Read and write plugin settings using YamlConfiguration. Save defau
 
 Bukkit ships with a built-in YAML configuration system that handles reading, writing, and reloading settings files with no external dependencies. The `FileConfiguration` base class defines the save/load contract, and `YamlConfiguration` is the concrete implementation that reads and writes standard `.yml` files. Your plugin's main config lives at `plugins/YourPlugin/config.yml`, and Bukkit's `JavaPlugin` base class gives you direct helpers to manage it.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["External or stored data"] --> B["Parse"]
-  B --> C{"Validate schema"}
-  C -->|Valid| D["Domain model"]
-  C -->|Invalid| E["Targeted error"]
-  D --> F["Reading and Writing Plugin Conf..."]
-```
-{/* visual-map:end */}
-
 ## Default config.yml
 
 Create a file called `config.yml` in `src/main/resources/`. Bukkit will bundle it inside your JAR and use it as the default configuration. Call `saveDefaultConfig()` in `onEnable()` to write that bundled file to disk the first time the plugin loads — subsequent calls are no-ops if the file already exists.

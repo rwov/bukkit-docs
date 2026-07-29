@@ -5,24 +5,6 @@ description: "Open modern vanilla dialogs, choose runtime or data-driven definit
 
 Modern Minecraft dialogs are the closest vanilla clients have to a form-style plugin screen. In the current Spigot API the entry points on `Player` are experimental.
 
-{/* visual-map:start */}
-<Frame caption="A modern confirmation dialog with input and explicit actions.">
-  ![Dialogs and Custom Clicks example](/assets/modern/dialog-confirmation.webp)
-</Frame>
-
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Create view or dialog"] --> B["Open for player"]
-  B --> C["Receive interaction"]
-  C --> D{"Session and action valid?"}
-  D -->|Yes| E["Run domain action"]
-  D -->|No| F["Ignore or close"]
-  E --> G["Render next state"]
-```
-{/* visual-map:end */}
-
 ## Opening a registered dialog
 
 A dialog installed in the server's data-driven registries can be opened by key:

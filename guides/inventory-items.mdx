@@ -6,24 +6,6 @@ description: "Create ItemStacks, edit item metadata, build custom GUI inventorie
 
 Items in Bukkit are represented by `ItemStack` — a combination of a `Material` type, a stack count, and an optional `ItemMeta` object that holds display names, lore, enchantments, and other rich data. The `Inventory` interface sits above all containers (player inventories, chests, custom GUI windows), giving you a uniform API for querying and mutating slot contents. This guide covers the full lifecycle of an item, from construction to giving it to a player, building custom GUI inventories, and responding to inventory click events.
 
-{/* visual-map:start */}
-<Frame caption="A practical inventory view with plugin-owned buttons and pagination controls.">
-  ![Bukkit Inventory API: Items, Metadata, and Custom GUIs example](/assets/modern/inventory-menu.webp)
-</Frame>
-
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Create view or dialog"] --> B["Open for player"]
-  B --> C["Receive interaction"]
-  C --> D{"Session and action valid?"}
-  D -->|Yes| E["Run domain action"]
-  D -->|No| F["Ignore or close"]
-  E --> G["Render next state"]
-```
-{/* visual-map:end */}
-
 ## Creating an ItemStack
 
 Construct an `ItemStack` with a `Material` and an optional amount. The default amount is `1` when you use the single-argument constructor.
@@ -51,7 +33,7 @@ public class CreateItems {
 ```
 
 <Note>
-Only use `ItemStack` with materials for which `Material.isItem()` returns `true`. Block-only materials like `Material.AIR` or `Material.WATER` cannot be represented as inventory items and will produce undefined behaviour.
+  Only use `ItemStack` with materials for which `Material.isItem()` returns `true`. Block-only materials like `Material.AIR` or `Material.WATER` cannot be represented as inventory items and will produce undefined behaviour.
 </Note>
 
 ## Item Metadata
@@ -93,7 +75,7 @@ public class ItemMetaExample {
 ```
 
 <Tip>
-`getItemMeta()` returns a **copy** of the metadata, not a live reference. You must call `setItemMeta(meta)` after making changes, or your edits will be lost.
+  `getItemMeta()` returns a **copy** of the metadata, not a live reference. You must call `setItemMeta(meta)` after making changes, or your edits will be lost.
 </Tip>
 
 ## Enchantments
@@ -138,7 +120,7 @@ public class EnchantmentExample {
 ```
 
 <Warning>
-`addUnsafeEnchantment()` can produce items that look odd or behave unexpectedly on vanilla clients. Use it intentionally — for example when building custom boss drops — rather than as a default.
+  `addUnsafeEnchantment()` can produce items that look odd or behave unexpectedly on vanilla clients. Use it intentionally — for example when building custom boss drops — rather than as a default.
 </Warning>
 
 ## Player Inventory
@@ -213,7 +195,7 @@ public class CustomInventoryExample {
 ```
 
 <Note>
-Slot indexes count left-to-right, top-to-bottom, starting at `0`. A 27-slot inventory (3 rows × 9 columns) has slots `0–26`. Plan your layout on paper or use a grid diagram to avoid off-by-one errors.
+  Slot indexes count left-to-right, top-to-bottom, starting at `0`. A 27-slot inventory (3 rows × 9 columns) has slots `0–26`. Plan your layout on paper or use a grid diagram to avoid off-by-one errors.
 </Note>
 
 ## Handling Inventory Clicks
@@ -258,7 +240,7 @@ public class InventoryClickListener implements Listener {
 ```
 
 <Warning>
-`InventoryClickEvent` fires for every inventory the player has open, including their own player inventory. Always check the inventory title or a custom identifier before acting on a click, otherwise your listener will interfere with normal gameplay.
+  `InventoryClickEvent` fires for every inventory the player has open, including their own player inventory. Always check the inventory title or a custom identifier before acting on a click, otherwise your listener will interfere with normal gameplay.
 </Warning>
 
 ## Full Example: Custom GUI Chest with Clickable Items
@@ -382,5 +364,5 @@ public class MyPlugin extends JavaPlugin {
 </CodeGroup>
 
 <Tip>
-For larger, more complex GUIs consider building a reusable `GuiManager` class that maps inventory titles (or `InventoryHolder` implementations) to click handlers. This avoids long `switch` statements and keeps your listener code clean as your GUI count grows.
+  For larger, more complex GUIs consider building a reusable `GuiManager` class that maps inventory titles (or `InventoryHolder` implementations) to click handlers. This avoids long `switch` statements and keeps your listener code clean as your GUI count grows.
 </Tip>

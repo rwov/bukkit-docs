@@ -6,24 +6,12 @@ description: "Complete reference for every plugin.yml field: required keys, opti
 
 `plugin.yml` is your plugin's manifest file. The server reads it directly from the root of your JAR before it loads any of your classes. It tells the server your plugin's name, entry-point class, version, dependencies, commands, and permissions. Omitting required fields or placing the file anywhere other than the JAR root will cause the server to reject your plugin entirely at startup.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["plugin.yml Reference: Configure..."]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
-```
-{/* visual-map:end */}
-
 ## Required fields
 
 You must include all three of the following fields in every `plugin.yml`. Missing any one of them will throw an exception and cause the server to skip your plugin.
 
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `name` | String | The unique identifier for your plugin. Must contain only alphanumeric characters, underscores, hyphens, and periods (`a–z A–Z 0–9 _ - .`). Spaces are deprecated. Used as the data-folder name and referenced by other plugins in `depend`/`softdepend`. |
 | `version` | String | An arbitrary version string, typically `MAJOR.MINOR.PATCH` (e.g. `1.4.1`). Displayed in `/version <PluginName>` output. |
 | `main` | String | The fully qualified class name of your `JavaPlugin` subclass (e.g. `com.example.myplugin.MyPlugin`). Must not start with `org.bukkit.`. |
@@ -105,7 +93,7 @@ You must include all three of the following fields in every `plugin.yml`. Missin
 <ParamField path="load" type="string">
   Controls which phase of server startup your plugin loads during. Accepted values:
 
-  - `POSTWORLD` *(default)* — Your plugin loads after the worlds have been loaded. This is correct for the vast majority of plugins.
+  - `POSTWORLD` _(default)_ — Your plugin loads after the worlds have been loaded. This is correct for the vast majority of plugins.
   - `STARTUP` — Your plugin loads before worlds are loaded. Use this only when you need to affect world generation or very early server initialization.
 
   ```yaml plugin.yml
@@ -195,7 +183,7 @@ commands:
 ```
 
 | Command property | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `description` | String | A user-friendly explanation of what the command does. Shown in `/help` output. |
 | `aliases` | String or list | Alternative names for the command. Aliases can only be defined here — setting them at runtime has no effect. Must not contain a colon. |
 | `permission` | String | The permission node required to execute the command. Players without it receive the `permission-message` and the executor is never called. |
@@ -233,7 +221,7 @@ permissions:
 The `default` value for each permission node controls who has it without an explicit grant from a permissions plugin:
 
 | Value | Who has the permission by default |
-|---|---|
+| --- | --- |
 | `true` | Every player on the server |
 | `false` | Nobody (must be granted explicitly) |
 | `op` | Only server operators |

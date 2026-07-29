@@ -6,76 +6,43 @@ icon: "utensils"
 
 # Recipes and crafting
 
-Register keyed crafting, cooking, smithing, and dynamic recipes.
+Static recipes are registered under a `NamespacedKey`. Dynamic rules belong in preparation/craft events, where every matrix and result must be treated as untrusted current state.
 
-{/* visual-map:start */}
-## Visual map
+## Register recipes
 
-```mermaid
-flowchart LR
-  A["Logical item ID"] --> B["ItemStack"]
-  B --> C["ItemMeta and components"]
-  C --> D["Client presentation"]
-  B --> E["Persistent data"]
-  E --> F["Server-side validation"]
-```
-{/* visual-map:end */}
+- Use a unique `NamespacedKey` owned by the plugin.
+- Choose shaped, shapeless, cooking, stonecutting, smithing, or complex recipe APIs based on the mechanic.
+- Define exact ingredients with `RecipeChoice` where appropriate.
+- Register during enable and remove plugin-owned keys during disable when needed.
 
-## Mental model
+## Dynamic validation
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Use `PrepareItemCraftEvent` to calculate or clear a preview result.
+- Use `CraftItemEvent` to authorize the final action and account for shift-click crafting.
+- Identify custom ingredients with PDC or exact controlled metadata, not only display names.
+- Recompute from the current matrix; do not trust an earlier preview.
 
-## Core workflow
+## Duplication safety
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Handle remaining items, container items, stack sizes, and full inventories.
+- Bound looped shift-click results.
+- Make rewards transactional when crafting affects external balances.
+- Test recipe discovery and conflicts with data packs and other plugins.
+
+## Example
 
 ```java
-public final class RecipesandcraftingFeature {
-    private final JavaPlugin plugin;
-
-    public RecipesandcraftingFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Recipes and crafting enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+NamespacedKey key = new NamespacedKey(plugin, "recall_crystal");
+ShapedRecipe recipe = new ShapedRecipe(key, result);
+recipe.shape(" E ", "EDE", " E ");
+recipe.setIngredient('E', Material.ENDER_PEARL);
+recipe.setIngredient('D', Material.DIAMOND);
+Bukkit.addRecipe(recipe);
 ```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
 
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate the current object type, ownership, and lifecycle before mutation.
+- Bound hot-path loops and spatial work.
+- Respect cancellation and changes made by other plugins.
+- Remove plugin-owned runtime state during feature shutdown.
