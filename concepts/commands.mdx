@@ -6,19 +6,6 @@ description: "Add custom slash-commands to your plugin with CommandExecutor and 
 
 Bukkit gives you a straightforward pipeline for adding custom `/` commands to your plugin: declare the command's metadata in `plugin.yml`, implement `CommandExecutor` to handle executions, and optionally implement `TabCompleter` to drive the suggestion list players see when they press Tab. Every piece is wired together in your plugin's `onEnable()` method, and the full `CommandSender` hierarchy lets you handle both players and console uniformly.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Command sender"] --> B["Parse arguments"]
-  B --> C{"Permission and input valid?"}
-  C -->|Yes| D["Call service"]
-  C -->|No| E["Return feedback"]
-  D --> F["Registering and Handling Comman..."]
-```
-{/* visual-map:end */}
-
 ## Declaring a Command in plugin.yml
 
 Every command your plugin handles must be declared under the `commands:` key in `plugin.yml` before it can be registered at runtime. Bukkit reads this file when it loads your plugin and reserves the command name.
@@ -41,7 +28,7 @@ commands:
 ```
 
 | Field | Required | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `description` | Recommended | Human-readable description shown in `/help` |
 | `usage` | Recommended | Sent to the sender when `onCommand` returns `false` |
 | `aliases` | Optional | Additional names that trigger the same executor |
@@ -53,7 +40,7 @@ commands:
 Create a class that implements `org.bukkit.command.CommandExecutor` and override `onCommand`. The method receives four arguments:
 
 | Parameter | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `sender` | `CommandSender` | Who ran the command (player, console, command block, …) |
 | `command` | `Command` | The `Command` object with metadata from `plugin.yml` |
 | `label` | `String` | The alias the sender actually typed |
@@ -111,7 +98,7 @@ public class GreetCommand implements CommandExecutor {
             sender.sendMessage("§cThis command can only be run by a player.");
             return true;
         }
-
+    
         Player player = (Player) sender;
         player.sendMessage("§aYour location: " + player.getLocation());
         return true;
@@ -123,14 +110,14 @@ public class GreetCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String displayName;
-
+    
         if (sender instanceof Player) {
             displayName = ((Player) sender).getDisplayName();
         } else {
             // ConsoleCommandSender or other non-player source
             displayName = "Console";
         }
-
+    
         Bukkit.broadcastMessage("§6" + displayName + " triggered a global event!");
         return true;
     }

@@ -6,70 +6,52 @@ icon: "terminal"
 
 # Commands
 
-Build command trees, sender checks, parsing, usage, and tab completion.
+A Bukkit command starts with an untrusted sender and string arguments. Parse into a typed request, authorize it, execute domain logic, and return a useful result.
 
-{/* visual-map:start */}
-## Visual map
+## Declare and register
 
-```mermaid
-flowchart LR
-  A["Command sender"] --> B["Parse arguments"]
-  B --> C{"Permission and input valid?"}
-  C -->|Yes| D["Call service"]
-  C -->|No| E["Return feedback"]
-  D --> F["Commands"]
-```
-{/* visual-map:end */}
+- Declare the command in `plugin.yml`.
+- Resolve it with `getCommand`; treat `null` as a packaging/configuration error.
+- Attach a `CommandExecutor` and optionally a `TabCompleter`.
+- Return `false` only when Bukkit should send the declared usage string.
 
-## Mental model
+## Sender and arguments
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- A sender may be a player, console, command block, or remote console.
+- Check `sender instanceof Player` only for player-only behavior.
+- Validate argument count before indexing the array.
+- Parse numbers, UUIDs, materials, and enum-like values with targeted error messages.
 
-## Core workflow
+## Completion
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Suggest only values valid at the current argument position.
+- Filter by the partially typed prefix.
+- Do not perform blocking database or network calls from tab completion.
+- Do not leak hidden player names, admin options, or unauthorized resources.
+
+## Example
 
 ```java
-public boolean onCommand(CommandSender sender, Command command,
-        String label, String[] args) {
-    if (!(sender instanceof Player player)) {
-        sender.sendMessage("Players only.");
+public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    if (!sender.hasPermission("example.give")) return true;
+    if (args.length != 1) {
+        sender.sendMessage("Usage: /" + label + " <amount>");
         return true;
     }
-    if (!player.hasPermission("example.use")) return true;
-    return service.execute(player.getUniqueId(), args);
+    try {
+        int amount = Integer.parseInt(args[0]);
+        if (amount < 1 || amount > 64) throw new NumberFormatException();
+        // Apply the authorized action.
+    } catch (NumberFormatException ex) {
+        sender.sendMessage("Amount must be from 1 to 64.");
+    }
+    return true;
 }
 ```
 
-## Edge cases
+## Production check
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate inputs and capabilities before mutation.
+- Keep hot-path work bounded and observable.
+- Re-check live state after any delay or asynchronous boundary.
+- Clean up every resource owned by the feature during disable.

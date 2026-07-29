@@ -6,19 +6,6 @@ description: "Learn how to listen to Bukkit events, set handler priority, cancel
 
 Bukkit's event system is the primary way your plugin reacts to what happens on the server. Whenever something occurs in the game — a player joining, a block being broken, a creature spawning — the server fires a corresponding `Event` object and calls every registered handler in priority order. By implementing the `Listener` interface and annotating your methods with `@EventHandler`, you can intercept these moments, read their data, and in many cases cancel or modify the outcome entirely.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Server action"] --> B["Handling Game Events in Bukkit ..."]
-  B --> C["Registered listener"]
-  C --> D{"Validate state"}
-  D -->|Allowed| E["Apply result"]
-  D -->|Rejected| F["Leave unchanged"]
-```
-{/* visual-map:end */}
-
 ## How Events Work
 
 When an in-game action occurs, Bukkit creates an event object that carries all relevant context (the player involved, the block that was broken, the damage amount, etc.) and passes it to the `PluginManager`, which dispatches it to all registered listeners sorted by `EventPriority`. Listeners run synchronously on the main server thread unless the event class is marked async.
@@ -62,7 +49,7 @@ The method name does not matter — Bukkit identifies handler methods purely by 
 When multiple plugins (or multiple listeners within one plugin) handle the same event, Bukkit calls them in the order defined by `EventPriority`. Lower-priority handlers run first, giving higher-priority handlers the final word.
 
 | Priority | Slot | Intended use |
-|---|---|---|
+| --- | --- | --- |
 | `LOWEST` | 0 | First to run; make tentative changes that others can override |
 | `LOW` | 1 | Early processing; your opinion matters less than most |
 | `NORMAL` | 2 | **Default.** Most plugins should use this value |
@@ -159,7 +146,7 @@ Bukkit automatically unregisters all of your plugin's listeners when the plugin 
 <CardGroup cols={2}>
   <Card title="Player Events" icon="person">
     | Class | Fires when… |
-    |---|---|
+    | --- | --- |
     | `PlayerJoinEvent` | A player connects to the server |
     | `PlayerQuitEvent` | A player disconnects |
     | `PlayerMoveEvent` | A player's position changes |
@@ -169,9 +156,10 @@ Bukkit automatically unregisters all of your plugin's listeners when the plugin 
     | `PlayerTeleportEvent` | A player teleports |
     | `AsyncPlayerChatEvent` | Chat message (fires off main thread) |
   </Card>
+
   <Card title="Block Events" icon="cube">
     | Class | Fires when… |
-    |---|---|
+    | --- | --- |
     | `BlockBreakEvent` | A player breaks a block |
     | `BlockPlaceEvent` | A player places a block |
     | `BlockBurnEvent` | A block burns from fire |
@@ -181,9 +169,10 @@ Bukkit automatically unregisters all of your plugin's listeners when the plugin 
     | `BlockRedstoneEvent` | Redstone power level changes |
     | `BlockPistonExtendEvent` | A piston extends |
   </Card>
+
   <Card title="Entity Events" icon="dragon">
     | Class | Fires when… |
-    |---|---|
+    | --- | --- |
     | `EntityDamageEvent` | Any entity takes damage |
     | `EntityDamageByEntityEvent` | An entity damages another entity |
     | `EntityDeathEvent` | An entity dies |
@@ -191,9 +180,10 @@ Bukkit automatically unregisters all of your plugin's listeners when the plugin 
     | `EntityExplodeEvent` | An entity explodes (e.g., Creeper) |
     | `EntityInteractEvent` | An entity interacts with a block |
   </Card>
+
   <Card title="World Events" icon="earth-americas">
     | Class | Fires when… |
-    |---|---|
+    | --- | --- |
     | `WorldLoadEvent` | A world is loaded |
     | `WorldUnloadEvent` | A world is unloaded |
     | `WorldSaveEvent` | A world is saved to disk |

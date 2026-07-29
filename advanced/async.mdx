@@ -6,76 +6,58 @@ icon: "microchip"
 
 # Threading and async safety
 
-Know what can leave the main thread and how to return results safely.
+Most Bukkit game state belongs to the main thread. Async code should operate on isolated immutable data, perform blocking or expensive work, then schedule a small revalidated continuation.
 
-{/* visual-map:start */}
-## Visual map
+## Safe boundary
+
+- Capture UUIDs, request IDs, primitive values, immutable records, or approved snapshots.
+- Do not pass live players, entities, worlds, inventories, block states, or mutable config into arbitrary workers.
+- Use a bounded executor so overload produces backpressure instead of unbounded threads.
+- Propagate exceptions and cancellation to an observable owner.
+
+## Return to the server
+
+- Schedule through the Bukkit scheduler.
+- Resolve live objects again by stable ID.
+- Check plugin enabled state, player connection, world/chunk availability, permissions, and request/session generation.
+- Discard stale results without mutating current state.
+
+## Ordering and shutdown
+
+- Use per-identity sequencing or transactions when writes can race.
+- Make duplicate operations idempotent.
+- Stop accepting work during disable, cancel where safe, drain required writes, then close the executor.
+- Never block the main thread waiting for a future that needs the main thread to complete.
+
+## Thread handoff
 
 ```mermaid
-flowchart LR
-  A["Main thread snapshot"] --> B["Async I/O or CPU work"]
-  B --> C["Schedule continuation"]
-  C --> D{"State still valid?"}
-  D -->|Yes| E["Apply on main thread"]
-  D -->|No| F["Discard stale result"]
+sequenceDiagram
+  participant M as Main thread
+  participant W as Worker
+  M->>W: UUID + immutable request
+  W->>W: database / HTTP / CPU work
+  W->>M: schedule immutable result
+  M->>M: re-resolve and revalidate
+  M->>M: apply or discard
 ```
-{/* visual-map:end */}
 
-## Mental model
-
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
-
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class ThreadingandasyncsafetyFeature {
-    private final JavaPlugin plugin;
-
-    public ThreadingandasyncsafetyFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Threading and async safety enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+UUID id = player.getUniqueId();
+long generation = sessions.generation(id);
+CompletableFuture.supplyAsync(() -> repository.load(id), executor)
+    .thenAccept(value -> Bukkit.getScheduler().runTask(plugin, () -> {
+        Player current = Bukkit.getPlayer(id);
+        if (current == null || sessions.generation(id) != generation) return;
+        apply(current, value);
+    }));
 ```
 
-## Edge cases
+## Review checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- The feature has one clear lifecycle owner.
+- Failure paths are observable and preserve valid previous state.
+- Resource, queue, cache, and loop bounds are explicit.
+- The final built JAR is tested on every claimed server line.

@@ -6,69 +6,42 @@ icon: "earth-americas"
 
 # Worlds and locations
 
-Create, load, configure, persist, and unload worlds safely.
+A `World` is live server state. A `Location` combines a world reference, coordinates, yaw, and pitch; persistent storage should usually keep the world UUID or name plus numeric fields.
 
-{/* visual-map:start */}
-## Visual map
+## Resolve worlds
 
-```mermaid
-flowchart TD
-  A["Server"] --> B["World"]
-  B --> C["Loaded chunk"]
-  C --> D["Block state"]
-  C --> E["Entities"]
-  D --> F["Events and updates"]
-  E --> F
-```
-{/* visual-map:end */}
+- Use `Bukkit.getWorld(UUID)` when a durable world identity is available.
+- A stored world may be missing, renamed, or not loaded.
+- Create/load worlds with `WorldCreator` during controlled lifecycle work.
+- Do not assume the first world or a hard-coded name is always correct.
 
-## Mental model
+## Locations and teleports
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Clone mutable `Location` objects before changing them.
+- Validate finite coordinates and an allowed world.
+- Load or generate the destination chunk intentionally, then find a safe floor and headroom.
+- Re-check that the player is online and the destination world remains loaded before delayed teleport.
 
-## Core workflow
+## Unload
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Move or reject players before unloading.
+- Flush plugin-owned world data and release chunk tickets.
+- Call unload with a deliberate save choice.
+- Drop cached world references after success.
+
+## Example
 
 ```java
-World arena = new WorldCreator("arena")
-    .environment(World.Environment.NORMAL)
-    .type(WorldType.NORMAL)
-    .createWorld();
-if (arena != null) {
-    arena.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-}
+World world = Bukkit.getWorld(savedWorldId);
+if (world == null) throw new IllegalStateException("Destination world is unavailable");
+Location destination = new Location(world, x, y, z, yaw, pitch);
+if (!world.getWorldBorder().isInside(destination)) return;
+player.teleport(destination);
 ```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
 
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate identity, world, and feature ownership at the point of mutation.
+- Keep main-thread work bounded; move only isolated data work off-thread.
+- Handle disconnect, unload, reload, and disable explicitly.
+- Read the exact API contract for the server version you target.

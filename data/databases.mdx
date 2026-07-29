@@ -6,70 +6,58 @@ icon: "database"
 
 # Databases
 
-Use SQLite, MySQL, PostgreSQL, pools, migrations, and async repositories.
+Database calls can block for milliseconds or seconds and must not run on the server thread. Hide SQL behind repositories, use bounded executors/pools, and return immutable domain data to a main-thread continuation.
 
-{/* visual-map:start */}
-## Visual map
+## Connection strategy
+
+- SQLite suits one server and one process; configure it for the plugin's concurrency pattern.
+- Use a small connection pool for remote SQL databases.
+- Set connection, statement, and socket timeouts.
+- Close `Connection`, `PreparedStatement`, and `ResultSet` with try-with-resources.
+
+## Schema and queries
+
+- Run ordered, idempotent migrations before accepting feature traffic.
+- Use prepared statements for every user-controlled value.
+- Add indexes for actual lookup and uniqueness rules.
+- Use transactions for multi-step state changes such as balance plus audit record.
+
+## Async boundary
+
+- Capture UUIDs and immutable request data on the main thread.
+- Execute repository work on a bounded executor.
+- Schedule a main-thread continuation, re-resolve the player/session, and discard stale results.
+- Drain or reject new work and close the pool during disable.
+
+## Thread boundary
 
 ```mermaid
 flowchart LR
-  A["External or stored data"] --> B["Parse"]
-  B --> C{"Validate schema"}
-  C -->|Valid| D["Domain model"]
-  C -->|Invalid| E["Targeted error"]
-  D --> F["Databases"]
+  A["Main thread request"] --> B["Bounded database executor"]
+  B --> C["Repository transaction"]
+  C --> D["Immutable result"]
+  D --> E["Main thread revalidation"]
+  E --> F["Apply to live state"]
 ```
-{/* visual-map:end */}
 
-## Mental model
-
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
-
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-CompletableFuture
-    .supplyAsync(() -> repository.load(playerId), databaseExecutor)
-    .thenAccept(profile -> Bukkit.getScheduler().runTask(
-        plugin, () -> sessions.open(playerId, profile)
-    ))
+CompletableFuture.supplyAsync(() -> repository.load(playerId), databaseExecutor)
+    .thenAccept(profile -> Bukkit.getScheduler().runTask(plugin, () -> {
+        Player player = Bukkit.getPlayer(playerId);
+        if (player == null || !sessions.isCurrent(playerId, requestId)) return;
+        sessions.open(player, profile);
+    }))
     .exceptionally(error -> {
-        plugin.getLogger().log(Level.SEVERE, "Profile load failed", error);
+        plugin.getLogger().log(Level.SEVERE, "Profile load failed for " + playerId, error);
         return null;
     });
 ```
 
-## Edge cases
+## Failure checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Define timeouts, limits, and ownership at the boundary.
+- Validate decoded values before they reach gameplay logic.
+- Make retries and duplicate delivery idempotent where necessary.
+- Close clients, pools, executors, and registrations during disable.

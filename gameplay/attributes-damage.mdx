@@ -6,75 +6,44 @@ icon: "heart-crack"
 
 # Attributes and damage
 
-Manage health, armor, speed, modifiers, damage sources, and events.
+Attributes define numeric capabilities such as max health or movement speed. Damage is an event-driven operation influenced by armor, effects, invulnerability, difficulty, and other plugins.
 
-{/* visual-map:start */}
-## Visual map
+## Attributes
 
-```mermaid
-flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["Attributes and damage"]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
-```
-{/* visual-map:end */}
+- Resolve an `AttributeInstance` and handle `null` when an entity does not support it.
+- Use a stable namespaced modifier identity where the API provides keyed modifiers.
+- Choose ADD\_NUMBER, ADD\_SCALAR, or MULTIPLY\_SCALAR\_1 deliberately.
+- Remove or replace plugin-owned modifiers instead of stacking duplicates after reload.
 
-## Mental model
+## Health
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Keep health within `0..maxHealth`.
+- Changing max health may require clamping current health.
+- Use absorption separately from base health.
+- Do not use health as durable identity or persistent progression storage.
 
-## Core workflow
+## Damage events
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Observe or cancel the appropriate damage event before applying side effects.
+- At `MONITOR`, observe only and respect cancellation.
+- Avoid recursive calls to `damage` from a damage handler without a guard.
+- Use the modern damage-source APIs available on the target version when attribution matters.
+
+## Example
 
 ```java
-public final class AttributesanddamageFeature {
-    private final JavaPlugin plugin;
-
-    public AttributesanddamageFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Attributes and damage enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
+AttributeInstance speed = mob.getAttribute(Attribute.MOVEMENT_SPEED);
+if (speed != null) {
+    speed.getModifiers().stream()
+        .filter(modifier -> modifier.getName().equals("example:arena_speed"))
+        .forEach(speed::removeModifier);
+    speed.addModifier(arenaSpeedModifier);
 }
 ```
 
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
 ## Production checklist
 
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Validate the current object type, ownership, and lifecycle before mutation.
+- Bound hot-path loops and spatial work.
+- Respect cancellation and changes made by other plugins.
+- Remove plugin-owned runtime state during feature shutdown.

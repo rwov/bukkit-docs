@@ -6,65 +6,44 @@ icon: "database"
 
 # Persistent data containers
 
-Store versioned namespaced data on items, entities, chunks, and worlds.
+`PersistentDataContainer` stores plugin-owned primitive data on supported Bukkit holders. Keys are namespaced, values use an explicit `PersistentDataType`, and the data follows the holder's normal persistence lifecycle.
 
-{/* visual-map:start */}
-## Visual map
+## Keys and types
 
-```mermaid
-flowchart LR
-  A["External or stored data"] --> B["Parse"]
-  B --> C{"Validate schema"}
-  C -->|Valid| D["Domain model"]
-  C -->|Invalid| E["Targeted error"]
-  D --> F["Persistent data containers"]
-```
-{/* visual-map:end */}
+- Create keys with `new NamespacedKey(plugin, "name")`.
+- Read with the same key and data type used to write.
+- Use `has`, `get`, and `getOrDefault` without confusing a missing key with a zero/empty value.
+- Prefer compact primitives, strings, byte arrays, or nested containers supported by the target API.
 
-## Mental model
+## Schema design
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Store a schema version beside nontrivial payloads.
+- Use one key per independently evolving field or a well-defined encoded value.
+- Validate lengths, ranges, enum names, UUIDs, and references after reading.
+- Migrate old versions on a controlled path and keep migration idempotent.
 
-## Core workflow
+## Holder behavior
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- For `ItemMeta`, write the changed meta back to the stack.
+- Entity, chunk, world, and tile-state persistence follows their save/update lifecycle.
+- PDC is not a database query layer and is poor for global cross-object indexes.
+- Remove obsolete keys when ownership ends or migration completes.
+
+## Example
 
 ```java
-NamespacedKey key = new NamespacedKey(plugin, "level");
-PersistentDataContainer data = entity.getPersistentDataContainer();
-data.set(key, PersistentDataType.INTEGER, 3);
-Integer level = data.get(key, PersistentDataType.INTEGER);
+NamespacedKey typeKey = new NamespacedKey(plugin, "item_type");
+ItemMeta meta = item.getItemMeta();
+meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, "recall_crystal");
+item.setItemMeta(meta);
+
+String type = item.getItemMeta().getPersistentDataContainer()
+    .get(typeKey, PersistentDataType.STRING);
 ```
 
-## Edge cases
+## Failure checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- Define timeouts, limits, and ownership at the boundary.
+- Validate decoded values before they reach gameplay logic.
+- Make retries and duplicate delivery idempotent where necessary.
+- Close clients, pools, executors, and registrations during disable.

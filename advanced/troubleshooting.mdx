@@ -6,75 +6,48 @@ icon: "screwdriver-wrench"
 
 # Troubleshooting handbook
 
-Diagnose startup, runtime, lag, data, dependency, and version failures.
+Troubleshoot by narrowing the failing boundary. Preserve the full log, exact reproduction, versions, configuration, and recent change before editing code.
 
-{/* visual-map:start */}
-## Visual map
+## Plugin will not enable
 
-```mermaid
-flowchart LR
-  A["Plugin entry point"] --> B["Validate context"]
-  B --> C["Troubleshooting handbook"]
-  C --> D["Bukkit API"]
-  D --> E["Server result"]
-```
-{/* visual-map:end */}
+- Find the first exception belonging to the plugin.
+- Check `plugin.yml`, entry class, Java bytecode version, missing libraries, and hard dependencies.
+- Verify the JAR being tested is the newly built artifact.
+- Reproduce after a full stop/start, not only a hot reload.
 
-## Mental model
+## Feature fails at runtime
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Confirm the command/event path actually ran.
+- Log stable identifiers and state transitions around the failure.
+- Check thread ownership, cancellation, permissions, object validity, and configuration values.
+- Minimize other plugins and data until the smallest reproducer remains.
 
-## Core workflow
+## Lag or memory growth
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Profile during the actual slow period.
+- Check hot handler frequency, unbounded loops/queues/caches, blocking I/O, and repeated allocations.
+- Inspect retained plugin classloaders and per-player state after quit.
+- Validate that disable closes tasks, threads, pools, listeners, and services.
+
+## Data failures
+
+- Back up before repair.
+- Check schema/config versions and migration logs.
+- Make repairs idempotent and report changed records.
+- Do not silently replace malformed production data with defaults.
+
+## Example
 
 ```java
-public final class TroubleshootinghandbookFeature {
-    private final JavaPlugin plugin;
-
-    public TroubleshootinghandbookFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    public void enable() {
-        plugin.getLogger().fine("Troubleshooting handbook enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
+getLogger().log(Level.SEVERE,
+    "Failed to load home {0} for player {1}; configVersion={2}",
+    new Object[] { homeName, playerId, settings.version() });
+// Log the throwable with a separate Level.SEVERE call when one exists.
 ```
 
-## Edge cases
+## Review checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- The feature has one clear lifecycle owner.
+- Failure paths are observable and preserve valid previous state.
+- Resource, queue, cache, and loop bounds are explicit.
+- The final built JAR is tested on every claimed server line.

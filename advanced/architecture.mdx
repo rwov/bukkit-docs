@@ -6,76 +6,61 @@ icon: "building"
 
 # Plugin architecture
 
-Design modular services, repositories, adapters, and feature ownership.
+A maintainable plugin has a small composition root, feature-owned lifecycle, testable domain decisions, and adapters around Bukkit, storage, and external systems.
 
-{/* visual-map:start */}
-## Visual map
+## Layers by responsibility
+
+- Commands and listeners adapt Bukkit inputs into application requests.
+- Application services coordinate use cases and transactions.
+- Domain objects enforce rules without reaching into global server state.
+- Repositories and gateways adapt databases, files, HTTP, and other plugins.
+
+## Dependency direction
+
+- Pass dependencies through constructors.
+- Depend on narrow interfaces owned by the consuming layer.
+- Keep `JavaPlugin` and static Bukkit access near the platform boundary.
+- Return stable domain values instead of leaking live `Player`, `World`, or `Inventory` objects through every layer.
+
+## Feature lifecycle
+
+- Each feature registers and closes its own listeners, tasks, sessions, views, and services.
+- Bootstrap features only after configuration and required dependencies are valid.
+- Allow partial optional integrations without weakening core invariants.
+- Make shutdown safe after both full and partial startup.
+
+## Dependency flow
 
 ```mermaid
-flowchart TD
-  A["Commands and listeners"] --> B["Application services"]
+flowchart LR
+  A["Commands and events"] --> B["Application use cases"]
   B --> C["Domain rules"]
-  B --> D["Bukkit adapter"]
-  B --> E["Repository or integration"]
-  D --> F["Minecraft server"]
+  B --> D["Repository interfaces"]
+  D --> E["SQL, YAML, HTTP"]
+  A --> F["Bukkit adapter"]
 ```
-{/* visual-map:end */}
 
-## Mental model
-
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
-
-## Core workflow
-
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+## Example
 
 ```java
-public final class PluginarchitectureFeature {
-    private final JavaPlugin plugin;
+public final class HomesFeature implements AutoCloseable {
+    private final HomeService service;
+    private final Listener listener;
 
-    public PluginarchitectureFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
+    public static HomesFeature start(JavaPlugin plugin, HomeRepository repository) {
+        HomeService service = new HomeService(repository);
+        Listener listener = new HomeListener(service);
+        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        return new HomesFeature(service, listener);
     }
 
-    public void enable() {
-        plugin.getLogger().fine("Plugin architecture enabled");
-    }
-
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
+    @Override public void close() { HandlerList.unregisterAll(listener); }
 }
 ```
 
-## Edge cases
+## Review checklist
 
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+- The feature has one clear lifecycle owner.
+- Failure paths are observable and preserve valid previous state.
+- Resource, queue, cache, and loop bounds are explicit.
+- The final built JAR is tested on every claimed server line.

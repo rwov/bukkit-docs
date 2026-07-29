@@ -5,24 +5,6 @@ description: "Create a secure confirmation workflow with keyed dialogs, custom c
 
 This tutorial builds the server-side half of a modern dialog workflow. The dialog definition itself is supplied by your matching data pack under the key `myplugin:confirm_reset`.
 
-{/* visual-map:start */}
-<Frame caption="The confirmation experience built in this tutorial.">
-  ![Build a Dialog Confirmation Flow example](/assets/modern/dialog-confirmation.webp)
-</Frame>
-
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Create view or dialog"] --> B["Open for player"]
-  B --> C["Receive interaction"]
-  C --> D{"Session and action valid?"}
-  D -->|Yes| E["Run domain action"]
-  D -->|No| F["Ignore or close"]
-  E --> G["Render next state"]
-```
-{/* visual-map:end */}
-
 ## 1. Store pending intent
 
 ```java

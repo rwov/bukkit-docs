@@ -6,75 +6,35 @@ icon: "route"
 
 # Complete learning path
 
-A sequenced route from Java basics to production plugin architecture.
+Learn plugin development in layers. Each stage below has a concrete exit test; move on when you can complete it without copying a full project.
 
-{/* visual-map:start */}
-## Visual map
+## 1. Java and builds
 
-```mermaid
-flowchart LR
-  A["Java source"] --> B["Maven or Gradle"]
-  B --> C["Plugin JAR"]
-  C --> D["Test server plugins folder"]
-  D --> E["Enable, test, iterate"]
-```
-{/* visual-map:end */}
+- Be comfortable with classes, interfaces, collections, exceptions, generics, and try-with-resources.
+- Create a Maven or Gradle project that compiles against the Spigot API.
+- Exit test: build a JAR repeatedly from a clean checkout.
 
-## Mental model
+## 2. Lifecycle, commands, and events
 
-Bukkit exposes server-owned objects through public interfaces. Obtain them from the server, an event, a factory, or another API object. Do not construct implementation classes or retain live objects longer than their lifecycle.
+- Implement a minimal `JavaPlugin`, declare it in `plugin.yml`, and verify enable/disable logs.
+- Register a command with sender validation and tab completion.
+- Register listeners and understand cancellation, priority, and synchronous versus asynchronous events.
+- Exit test: a command changes behavior and an event handler can be cleanly disabled.
 
-## Core workflow
+## 3. Game state and persistence
 
-1. Validate configuration and player-controlled input.
-2. Resolve the current Bukkit objects needed for the action.
-3. Check permissions and cancellation state.
-4. Perform live server mutations on the main thread.
-5. Move only isolated blocking I/O or CPU work off-thread.
-6. Re-check player, world, entity, or plugin state before applying delayed results.
-7. Clean up every owned resource during feature shutdown.
+- Work with players, locations, worlds, blocks, entities, inventories, and `ItemMeta`.
+- Use UUIDs and `NamespacedKey` for durable identity.
+- Move configuration, database, and HTTP work behind small repository interfaces.
+- Exit test: data survives restart and a disconnected player does not leave stale state.
 
-```java
-public final class CompletelearningpathFeature {
-    private final JavaPlugin plugin;
+## 4. Production engineering
 
-    public CompletelearningpathFeature(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
+- Profile tick-time problems before optimizing.
+- Test domain logic separately and exercise the built JAR on a real server.
+- Design explicit startup, failure, reload, and shutdown behavior.
+- Exit test: the plugin handles missing config, dependency failure, reload, and shutdown without data loss.
 
-    public void enable() {
-        plugin.getLogger().fine("Complete learning path enabled");
-    }
+## Done check
 
-    public void disable() {
-        // Release every task, listener, UI, cache, or connection owned here.
-    }
-}
-```
-
-## Edge cases
-
-- The player disconnects, dies, changes worlds, or loses permission.
-- A world or chunk unloads during delayed work.
-- Another plugin cancels or changes the same event.
-- Configuration reloads while sessions are active.
-- The plugin disables with tasks, writes, or menus still open.
-- A duplicate click, command, packet, or reward is delivered.
-
-## Performance
-
-Keep hot event handlers short. Bound loops and spatial searches, cache only stable values, batch large world edits across ticks, avoid blocking I/O, and update UI only when visible data changes.
-
-## Production checklist
-
-- Use UUIDs for player identity.
-- Use `NamespacedKey` for plugin-owned registrations and data.
-- Validate nullability and object validity.
-- Document thread ownership.
-- Cancel tasks and release registrations.
-- Test clean startup, shutdown, restart, and failure recovery.
-- Read exact overloads and deprecations in the official Javadocs.
-
-<Warning>
-Most live Bukkit API state is not thread-safe. Unless the exact API contract says otherwise, access worlds, entities, players, inventories, and plugin state on the main server thread.
-</Warning>
+Verify the built artifact from a clean build and test it through a full server start and stop. Record the exact Java, server, and plugin versions when behavior differs between environments.

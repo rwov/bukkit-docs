@@ -6,20 +6,6 @@ description: "Load worlds, query and set blocks, use BlockData, manage chunks, a
 
 Minecraft's `World` interface is one of the largest and most powerful APIs in Bukkit. It gives you access to every block coordinate, chunk, entity, environmental setting, and particle effect within a dimension. The companion `Block` interface represents a single, live block at a specific location and lets you read or change its material and `BlockData` state. Together these two interfaces let you build anything from block replacement utilities to full procedural level generators.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Server"] --> B["World"]
-  B --> C["Loaded chunk"]
-  C --> D["Block state"]
-  C --> E["Entities"]
-  D --> F["Events and updates"]
-  E --> F
-```
-{/* visual-map:end */}
-
 ## Getting a World Reference
 
 The `Bukkit` server class exposes static helpers to retrieve world instances by name or UUID.
@@ -51,7 +37,7 @@ public class WorldLookup {
 ```
 
 <Note>
-`Bukkit.getWorld(String)` returns `null` if no world with that name is currently loaded. Always null-check the result before using it, especially if your plugin supports multi-world setups.
+  `Bukkit.getWorld(String)` returns `null` if no world with that name is currently loaded. Always null-check the result before using it, especially if your plugin supports multi-world setups.
 </Note>
 
 ## Working with Blocks
@@ -101,7 +87,7 @@ public class BlockExample {
 ```
 
 <Warning>
-Setting blocks one at a time in a large loop is expensive because each call triggers lighting and physics updates. For bulk operations consider batching changes or using asynchronous chunk loading patterns where your server software supports it.
+  Setting blocks one at a time in a large loop is expensive because each call triggers lighting and physics updates. For bulk operations consider batching changes or using asynchronous chunk loading patterns where your server software supports it.
 </Warning>
 
 ### Using BlockData
@@ -299,10 +285,11 @@ public class MyPlugin extends JavaPlugin {
 ```
 
 <Note>
-Register your custom generator in `bukkit.yml` under the `worlds` section so Bukkit uses it when loading that world:
-```yaml
-worlds:
-  my_flat_world:
-    generator: MyPlugin
-```
+  Register your custom generator in `bukkit.yml` under the `worlds` section so Bukkit uses it when loading that world:
+
+  ```yaml
+  worlds:
+    my_flat_world:
+      generator: MyPlugin
+  ```
 </Note>

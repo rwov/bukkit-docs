@@ -6,24 +6,11 @@ description: "Create, build, and load your first Bukkit plugin in under 10 minut
 
 This guide walks you through every step needed to go from an empty directory to a running Bukkit plugin on a local Minecraft server. You will set up a Maven project, write a minimal `JavaPlugin` subclass, define a `plugin.yml` descriptor, build a JAR, and verify that your plugin loads correctly.
 
-{/* visual-map:start */}
-## Visual map
-
-```mermaid
-flowchart LR
-  A["Java source"] --> B["Maven or Gradle"]
-  B --> C["Plugin JAR"]
-  C --> D["Test server plugins folder"]
-  D --> E["Enable, test, iterate"]
-```
-{/* visual-map:end */}
-
 <Tip>
   Keep a local SpigotMC or PaperMC test server handy before you begin. You will need a running server to verify the plugin loads in the final steps. Never test new plugins directly on a production server.
 </Tip>
 
 <Steps>
-
   <Step title="Add the Bukkit dependency">
     The Bukkit API artifact lives in the SpigotMC Maven snapshot repository. Add the repository declaration and the dependency to your `pom.xml`. Use `provided` scope so Maven compiles against the API without bundling it in your JAR — the server already ships the implementation at runtime.
 
@@ -36,7 +23,7 @@ flowchart LR
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
     </repositories>
-
+    
     <dependencies>
         <dependency>
             <groupId>org.bukkit</groupId>
@@ -53,7 +40,7 @@ flowchart LR
             url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
         }
     }
-
+    
     dependencies {
         compileOnly 'org.bukkit:bukkit:26.2-R0.1-SNAPSHOT'
     }
@@ -79,22 +66,21 @@ flowchart LR
     </build>
     ```
   </Step>
-
   <Step title="Create your plugin main class">
     Every Bukkit plugin needs one class that extends `org.bukkit.plugin.java.JavaPlugin`. The server instantiates this class when it loads your plugin and calls `onEnable()` immediately after. Create the file at the path matching your package:
 
     ```java src/main/java/com/example/myplugin/MyPlugin.java
     package com.example.myplugin;
-
+    
     import org.bukkit.plugin.java.JavaPlugin;
-
+    
     public class MyPlugin extends JavaPlugin {
-
+    
         @Override
         public void onEnable() {
             getLogger().info("MyPlugin has been enabled!");
         }
-
+    
         @Override
         public void onDisable() {
             getLogger().info("MyPlugin has been disabled.");
@@ -106,7 +92,6 @@ flowchart LR
     - `onDisable()` runs when the server shuts down or unloads your plugin. Use it to flush any data you need to persist.
     - `getLogger()` returns a `java.util.logging.Logger` scoped to your plugin's name. Prefer it over `System.out.println`.
   </Step>
-
   <Step title="Create plugin.yml">
     Place a `plugin.yml` file at `src/main/resources/plugin.yml`. The server reads this file from the root of your JAR to identify your plugin before loading any classes. The three required fields are `name`, `version`, and `main`.
 
@@ -121,7 +106,6 @@ flowchart LR
 
     The `api-version` field tells the server which Bukkit API version your plugin was written against, which helps the server apply the correct compatibility behavior. See the [plugin.yml reference](/plugin-yml) for every available field.
   </Step>
-
   <Step title="Build with Maven">
     Run the standard Maven lifecycle from your project root to compile the code and package it into a JAR:
 
@@ -131,7 +115,6 @@ flowchart LR
 
     Maven places the finished JAR in `target/`. It will be named something like `myplugin-1.0.0.jar` based on your `<artifactId>` and `<version>` settings in `pom.xml`.
   </Step>
-
   <Step title="Install into your server">
     Copy the JAR from `target/` into the `plugins/` directory of your test server, then restart the server:
 
@@ -147,7 +130,6 @@ flowchart LR
 
     The server scans the `plugins/` directory on every startup and loads all valid plugin JARs it finds.
   </Step>
-
   <Step title="Verify the plugin loaded">
     Watch the server console output during startup. You should see your plugin's enable message appear in the log:
 
@@ -160,7 +142,6 @@ flowchart LR
 
     If the plugin name appears in red or is missing entirely, check the console for earlier error messages — they usually point directly to a misconfigured `plugin.yml` or a missing class.
   </Step>
-
 </Steps>
 
 ## Next steps
@@ -171,9 +152,11 @@ Your plugin is running. Now explore what you can actually build with it:
   <Card title="Events" icon="bolt" href="/concepts/events">
     Listen for player actions and server lifecycle events using Bukkit's event system.
   </Card>
+
   <Card title="Commands" icon="terminal" href="/concepts/commands">
     Register custom slash-commands and handle tab completion.
   </Card>
+
   <Card title="plugin.yml reference" icon="file-lines" href="/plugin-yml">
     See every field available in plugin.yml, including commands, permissions, and load order.
   </Card>

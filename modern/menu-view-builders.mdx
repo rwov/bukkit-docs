@@ -5,26 +5,8 @@ description: "Build typed vanilla inventory views with modern MenuType APIs and 
 
 `MenuType` represents the vanilla menu types a player can view. Current Spigot provides typed constants and builders, including anvil, furnace, merchant, lectern, loom, stonecutter, crafter, crafting, generic chest grids, and more.
 
-{/* visual-map:start */}
-<Frame caption="A typed chest view used as a server navigator.">
-  ![MenuType and View Builders example](/assets/modern/inventory-menu.webp)
-</Frame>
-
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Create view or dialog"] --> B["Open for player"]
-  B --> C["Receive interaction"]
-  C --> D{"Session and action valid?"}
-  D -->|Yes| E["Run domain action"]
-  D -->|No| F["Ignore or close"]
-  E --> G["Render next state"]
-```
-{/* visual-map:end */}
-
 <Warning>
-`MenuType` and `InventoryViewBuilder` are currently experimental. Their signatures may change between server releases.
+  `MenuType` and `InventoryViewBuilder` are currently experimental. Their signatures may change between server releases.
 </Warning>
 
 ## Create a generic view

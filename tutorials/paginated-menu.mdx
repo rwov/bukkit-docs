@@ -8,24 +8,6 @@ icon: "table-list"
 
 Display arbitrary data across inventory pages.
 
-{/* visual-map:start */}
-<Frame caption="A paginated menu with previous and next controls.">
-  ![Paginate a menu example](/assets/modern/inventory-menu.webp)
-</Frame>
-
-## Visual map
-
-```mermaid
-flowchart TD
-  A["Create view or dialog"] --> B["Open for player"]
-  B --> C["Receive interaction"]
-  C --> D{"Session and action valid?"}
-  D -->|Yes| E["Run domain action"]
-  D -->|No| F["Ignore or close"]
-  E --> G["Render next state"]
-```
-{/* visual-map:end */}
-
 This tutorial builds a complete feature with explicit ownership, validation, cleanup, and test cases.
 
 ## Architecture
@@ -86,5 +68,5 @@ public void onDisable() {
 Test permission denial, invalid input, duplicate actions, disconnects, world unloads, storage failure, restart recovery, and many simultaneous players.
 
 <Check>
-The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
+  The feature is complete when it has one clear owner, deterministic cleanup, bounded state, main-thread-safe Bukkit access, and repeatable tests.
 </Check>
